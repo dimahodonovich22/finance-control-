@@ -11,6 +11,7 @@
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="apple-touch-icon" href="apple-touch-icon.png" />
   <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="ai-import.css" />
   <title>Finance Control</title>
 </head>
 <body>
@@ -147,7 +148,12 @@
             <h2>Операции</h2>
             <p>Доходы, расходы и платежи по долгам в одном месте.</p>
           </div>
-          <button class="primary-btn" type="button" id="addTxBtn">+ Добавить</button>
+          <div class="heading-actions">
+            <button class="secondary-btn ai-entry-btn" type="button" data-go="import">
+              <span class="ai-spark">✦</span><span>AI импорт</span>
+            </button>
+            <button class="primary-btn" type="button" id="addTxBtn">+ Добавить</button>
+          </div>
         </div>
 
         <div class="toolbar-card">
@@ -164,6 +170,87 @@
         </div>
 
         <div class="surface list-surface"><div id="txList" class="transaction-list"></div></div>
+      </section>
+
+      <section id="import" class="page hidden">
+        <div class="page-heading import-heading">
+          <div>
+            <span class="micro-label">AI Import</span>
+            <h2>Импорт выписки</h2>
+            <p>Загрузи CSV из банка. Приложение очистит данные, AI распределит операции, а ты всё проверишь до добавления.</p>
+          </div>
+          <button class="secondary-btn" type="button" data-go="transactions">← Операции</button>
+        </div>
+
+        <div class="ai-privacy-note">
+          <span class="privacy-shield">✓</span>
+          <div><strong>Приватность по умолчанию</strong><p>IBAN, длинные номера карт и похожие идентификаторы удаляются до отправки. В OpenAI уходят только дата, сумма и очищенное описание выбранных операций.</p></div>
+        </div>
+
+        <section class="import-grid">
+          <article class="import-card import-source-card">
+            <div class="import-card-head">
+              <div><span class="step-number">1</span><span class="micro-label">Источник</span><h3>Банковская выписка</h3></div>
+              <span class="connection-pill" id="aiConnectionBadge"><span></span>Не проверено</span>
+            </div>
+
+            <label class="drop-zone" id="bankDropZone" for="bankFile">
+              <input id="bankFile" type="file" accept=".csv,.txt,text/csv,text/plain" />
+              <span class="drop-icon">↥</span>
+              <strong id="bankFileLabel">Выбрать CSV</strong>
+              <span>Поддерживаются CSV/TXT до 10 МБ · данные сначала читаются локально</span>
+            </label>
+
+            <div id="fileSummary" class="file-summary hidden"></div>
+
+            <div id="mappingPanel" class="mapping-panel hidden">
+              <div class="mapping-intro"><strong>Проверь колонки</strong><span>Мы постарались определить их автоматически.</span></div>
+              <div class="form-grid mapping-grid">
+                <label class="field"><span>Дата</span><select id="mapDate"></select></label>
+                <label class="field"><span>Описание</span><select id="mapDescription"></select></label>
+                <label class="field"><span>Сумма</span><select id="mapAmount"></select><small>Используй, если расходы отрицательные, а поступления положительные.</small></label>
+                <label class="field"><span>Расход отдельно</span><select id="mapDebit"></select><small>Необязательно, если есть одна колонка «Сумма».</small></label>
+                <label class="field"><span>Доход отдельно</span><select id="mapCredit"></select><small>Необязательно, если есть одна колонка «Сумма».</small></label>
+              </div>
+              <div class="sheet-actions import-actions"><button class="primary-btn" type="button" id="prepareImportBtn">Подготовить операции</button></div>
+            </div>
+          </article>
+
+          <article class="import-card ai-connect-card">
+            <div class="import-card-head">
+              <div><span class="step-number">2</span><span class="micro-label">Supabase</span><h3>Подключение AI</h3></div>
+            </div>
+            <p class="import-copy">OpenAI API key хранится только в Supabase Edge Function. В браузере сохраняются URL функции и твой личный access token.</p>
+            <div class="connect-preview">
+              <div><span>Browser</span><strong>Finance Control</strong></div><i>→</i><div><span>Supabase</span><strong>Edge Function</strong></div><i>→</i><div><span>OpenAI</span><strong>GPT classifier</strong></div>
+            </div>
+            <button class="secondary-btn full-btn" type="button" id="openAiSettingsBtn">Настроить подключение</button>
+          </article>
+        </section>
+
+        <section id="preparedSection" class="prepared-section hidden">
+          <div class="section-header prepared-header">
+            <div><span class="micro-label">Готово к анализу</span><h2>Операции из файла</h2></div>
+            <div class="prepared-actions"><button class="secondary-btn" type="button" id="resetImportBtn">Другой файл</button><button class="primary-btn" type="button" id="analyzeAiBtn"><span class="ai-spark">✦</span> Разобрать с AI</button></div>
+          </div>
+          <div class="import-stats" id="importStats"></div>
+          <div class="import-balance-note"><strong>Текущий баланс останется прежним.</strong><span>История добавится в аналитику, а стартовый баланс автоматически скорректируется на чистый поток импортированных операций.</span></div>
+          <div class="analysis-progress hidden" id="analysisProgress"><div class="analysis-progress-top"><span id="analysisProgressText">AI анализирует…</span><strong id="analysisProgressPct">0%</strong></div><div class="progress"><span id="analysisProgressBar" style="width:0%"></span></div></div>
+          <div class="surface raw-preview-surface"><div id="rawPreview" class="raw-preview"></div></div>
+        </section>
+
+        <section id="reviewSection" class="review-section hidden">
+          <div class="section-header review-header">
+            <div><span class="micro-label">Проверка</span><h2>Перед импортом</h2></div>
+            <span class="review-count" id="reviewCount"></span>
+          </div>
+          <div class="review-toolbar">
+            <label class="search-box" for="reviewSearch"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="11" cy="11" r="7"/><path d="m20 20-4.1-4.1" stroke-linecap="round"/></svg><input id="reviewSearch" type="search" placeholder="Поиск по операции или категории" /></label>
+            <div class="filter-row review-filters"><button class="filter-chip active" type="button" data-review-filter="all">Все</button><button class="filter-chip" type="button" data-review-filter="review">Нужно проверить</button><button class="filter-chip" type="button" data-review-filter="expense">Расходы</button><button class="filter-chip" type="button" data-review-filter="income">Доходы</button></div>
+          </div>
+          <div id="reviewList" class="review-list"></div>
+          <div class="import-final-bar"><div><span id="selectedImportSummary">0 выбрано</span><small id="duplicateSummary">Дубликаты будут пропущены автоматически</small></div><button class="primary-btn" type="button" id="commitImportBtn">Импортировать</button></div>
+        </section>
       </section>
 
       <section id="debts" class="page hidden">
@@ -273,12 +360,22 @@
             <p class="settings-note">Экспортируй резервную копию перед очисткой Safari, сменой телефона или крупными изменениями.</p>
           </section>
 
+          <section class="settings-card ai-settings-card" id="aiSettingsCard">
+            <div class="settings-head"><div><span class="micro-label">AI Import</span><h3>Supabase подключение</h3></div><span class="connection-pill compact" id="settingsConnectionBadge"><span></span>Не проверено</span></div>
+            <div class="ai-settings-fields">
+              <label class="field"><span>URL Edge Function</span><input id="aiFunctionUrl" type="url" inputmode="url" autocomplete="off" placeholder="https://PROJECT.supabase.co/functions/v1/classify-transactions" /><small>URL не является секретом.</small></label>
+              <label class="field"><span>Личный access token</span><input id="aiAccessToken" type="password" autocomplete="off" placeholder="Введи FINANCE_ACCESS_TOKEN" /><small>Хранится только локально на этом устройстве. Не попадает в JSON backup.</small></label>
+            </div>
+            <div class="data-actions"><button class="primary-btn" type="button" id="saveAiConfigBtn">Сохранить</button><button class="secondary-btn" type="button" id="testAiBtn">Проверить соединение</button></div>
+            <p class="settings-note">OpenAI API key сюда вводить не нужно — он должен быть секретом <strong>OPENAI_API_KEY</strong> внутри Supabase.</p>
+          </section>
+
           <section class="settings-card">
             <div class="settings-head"><div><span class="micro-label">Приватность</span><h3>Как хранятся данные</h3></div></div>
-            <p class="settings-note settings-note-first">Приложение не использует аккаунт и сервер. Операции, долги и настройки записываются в localStorage текущего браузера.</p>
+            <p class="settings-note settings-note-first">Операции, долги и настройки записываются в localStorage текущего браузера. Только когда ты сам запускаешь AI-анализ, очищенные строки выбранных банковских операций отправляются через твою Supabase Edge Function в OpenAI.</p>
             <div class="privacy-list">
-              <div><span class="status-dot"></span><span>Нет отправки данных наружу</span></div>
-              <div><span class="status-dot"></span><span>Работает офлайн после первой загрузки</span></div>
+              <div><span class="status-dot"></span><span>Обычная работа приложения — полностью локальная</span></div>
+              <div><span class="status-dot"></span><span>Основные функции работают офлайн после первой загрузки</span></div>
               <div><span class="status-dot"></span><span>Можно установить как PWA на iPhone</span></div>
             </div>
           </section>
@@ -324,7 +421,7 @@
           <label class="field"><span>Дата</span><input id="txDate" type="date" required /></label>
           <label class="field field-full"><span>Комментарий</span><input id="txNote" placeholder="Необязательно" /></label>
         </div>
-        <datalist id="categorySuggestions"><option value="Зарплата"><option value="Еда"><option value="Аренда"><option value="Транспорт"><option value="Покупки"><option value="Развлечения"><option value="Подписки"><option value="Здоровье"><option value="Путешествия"><option value="Погашение долга"></datalist>
+        <datalist id="categorySuggestions"><option value="Зарплата"><option value="Прочий доход"><option value="Еда"><option value="Рестораны"><option value="Аренда/Жильё"><option value="Коммунальные"><option value="Транспорт"><option value="Топливо"><option value="Авто"><option value="Покупки"><option value="Развлечения"><option value="Подписки"><option value="Здоровье"><option value="Спорт"><option value="Путешествия"><option value="Страхование"><option value="Налоги/Сборы"><option value="Наличные"><option value="Погашение долга"><option value="Другое"></datalist>
         <div class="sheet-actions"><button class="secondary-btn" type="button" data-close="txDialog">Отмена</button><button class="primary-btn" type="submit" id="txSubmit">Добавить</button></div>
       </form>
     </div>
@@ -372,5 +469,6 @@
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <script src="app.js" defer></script>
+  <script src="ai-import.js" defer></script>
 </body>
 </html>

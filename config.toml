@@ -1,0 +1,2 @@
+[functions.classify-transactions]
+verify_jwt = false

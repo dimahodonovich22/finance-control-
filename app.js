@@ -1,8 +1,8 @@
 (()=>{
   'use strict';
 
-  const STORAGE_KEY='finance-control-v3';
-  const PREVIOUS_KEYS=['finance-control-v2','finance-control-v1'];
+  const STORAGE_KEY='finance-control-v4';
+  const PREVIOUS_KEYS=['finance-control-v3','finance-control-v2','finance-control-v1'];
   const $=id=>document.getElementById(id);
   const qsa=sel=>Array.from(document.querySelectorAll(sel));
   const uid=()=>globalThis.crypto?.randomUUID?.()||`id-${Date.now()}-${Math.random().toString(16).slice(2)}`;
@@ -34,7 +34,7 @@
 
   function defaultState(){
     return{
-      version:3,
+      version:4,
       settings:{
         startBalance:0,
         spendBudget:0,
@@ -58,15 +58,24 @@
     out.settings.salaryDay=Math.round(clamp(s.salaryDay,0,31));
     out.settings.reserveFloor=Math.max(0,Number(s.reserveFloor)||0);
 
-    out.transactions=(Array.isArray(raw?.transactions)?raw.transactions:[]).map(t=>({
-      id:String(t.id||uid()),
-      type:t.type==='income'?'income':'expense',
-      amount:Math.max(0,Number(t.amount)||0),
-      category:String(t.category||'Без категории').slice(0,80),
-      date:/^\d{4}-\d{2}-\d{2}$/.test(t.date||'')?t.date:today(),
-      note:String(t.note||'').slice(0,180),
-      createdAt:Number(t.createdAt)||0
-    })).filter(t=>t.amount>0);
+    out.transactions=(Array.isArray(raw?.transactions)?raw.transactions:[]).map(t=>{
+      const type=t.type==='income'?'income':'expense';
+      const allowedKinds=['income','expense','transfer','refund','debt_payment'];
+      const fallbackKind=t.category==='Погашение долга'?'debt_payment':type;
+      return{
+        id:String(t.id||uid()),
+        type,
+        kind:allowedKinds.includes(t.kind)?t.kind:fallbackKind,
+        amount:Math.max(0,Number(t.amount)||0),
+        category:String(t.category||'Без категории').slice(0,80),
+        date:/^\d{4}-\d{2}-\d{2}$/.test(t.date||'')?t.date:today(),
+        note:String(t.note||'').slice(0,180),
+        merchant:String(t.merchant||'').slice(0,100),
+        externalId:String(t.externalId||'').slice(0,180),
+        importedByAI:Boolean(t.importedByAI),
+        createdAt:Number(t.createdAt)||0
+      };
+    }).filter(t=>t.amount>0);
 
     out.debts=(Array.isArray(raw?.debts)?raw.debts:[]).map(d=>{
       const balance=Math.max(0,Number(d.balance)||0);
@@ -120,19 +129,28 @@
   }
 
   function monthStats(){
-    let income=0,lifestyleExpense=0,debtPayments=0,allExpense=0,allDelta=0;
+    let income=0,lifestyleExpense=0,debtPayments=0,refunds=0,transfers=0,allExpense=0,allDelta=0;
     for(const t of state.transactions){
-      const signed=t.type==='income'?t.amount:-t.amount;
-      allDelta+=signed;
+      const kind=t.kind||(t.category==='Погашение долга'?'debt_payment':t.type);
+      if(kind!=='transfer')allDelta+=t.type==='income'?t.amount:-t.amount;
       if(!isThisMonth(t.date))continue;
-      if(t.type==='income')income+=t.amount;
-      else{
-        allExpense+=t.amount;
-        if(t.category==='Погашение долга')debtPayments+=t.amount;
+      if(kind==='transfer'){transfers+=t.amount;continue}
+      if(kind==='refund'){
+        refunds+=t.amount;
+        if(t.type==='income')lifestyleExpense-=t.amount;
         else lifestyleExpense+=t.amount;
+        continue;
       }
+      if(kind==='debt_payment'||t.category==='Погашение долга'){
+        debtPayments+=t.amount;
+        allExpense+=t.amount;
+        continue;
+      }
+      if(t.type==='income')income+=t.amount;
+      else{allExpense+=t.amount;lifestyleExpense+=t.amount}
     }
-    return{income,lifestyleExpense,debtPayments,allExpense,cashflow:income-allExpense,allDelta};
+    lifestyleExpense=Math.max(0,lifestyleExpense);
+    return{income,lifestyleExpense,debtPayments,refunds,transfers,allExpense,cashflow:income+refunds-allExpense,allDelta};
   }
 
   function totals(){
@@ -353,7 +371,7 @@
   }
 
   function renderCategoryChart(){
-    const monthExpenses=state.transactions.filter(t=>t.type==='expense'&&t.category!=='Погашение долга'&&isThisMonth(t.date));
+    const monthExpenses=state.transactions.filter(t=>t.type==='expense'&&(t.kind||'expense')!=='transfer'&&(t.kind||'expense')!=='debt_payment'&&t.category!=='Погашение долга'&&isThisMonth(t.date));
     const sums=new Map();
     for(const t of monthExpenses)sums.set(t.category,(sums.get(t.category)||0)+t.amount);
     const rows=[...sums.entries()].sort((a,b)=>b[1]-a[1]).slice(0,6);
@@ -367,8 +385,8 @@
     const query=($('txSearch')?.value||'').trim().toLowerCase();
     let rows=sortedTransactions();
     if(currentTxFilter==='income')rows=rows.filter(t=>t.type==='income');
-    if(currentTxFilter==='expense')rows=rows.filter(t=>t.type==='expense'&&t.category!=='Погашение долга');
-    if(currentTxFilter==='debt')rows=rows.filter(t=>t.category==='Погашение долга');
+    if(currentTxFilter==='expense')rows=rows.filter(t=>t.type==='expense'&&(t.kind||'expense')!=='debt_payment'&&t.category!=='Погашение долга');
+    if(currentTxFilter==='debt')rows=rows.filter(t=>(t.kind||'')==='debt_payment'||t.category==='Погашение долга');
     if(query)rows=rows.filter(t=>`${t.category} ${t.note}`.toLowerCase().includes(query));
     $('txList').innerHTML=rows.length?rows.map(t=>txRow(t)).join(''):`<div class="empty-state"><strong>Ничего не найдено</strong>Измени фильтр или добавь новую операцию.</div>`;
   }
@@ -509,10 +527,14 @@
     const item={
       id,
       type:$('txType').value==='income'?'income':'expense',
+      kind:$('txType').value==='income'?'income':'expense',
       amount,
       category:$('txCategory').value.trim()||'Без категории',
       date:$('txDate').value||today(),
       note:$('txNote').value.trim(),
+      merchant:existing?.merchant||'',
+      externalId:existing?.externalId||'',
+      importedByAI:Boolean(existing?.importedByAI),
       createdAt:existing?.createdAt||Date.now()
     };
     const i=state.transactions.findIndex(t=>t.id===id);
@@ -585,7 +607,7 @@
     const paid=Math.min(amount,d.balance);
     d.balance=Math.max(0,d.balance-paid);
     state.transactions.push({
-      id:uid(),type:'expense',amount:paid,category:'Погашение долга',
+      id:uid(),type:'expense',kind:'debt_payment',amount:paid,category:'Погашение долга',
       date:$('paymentDate').value||today(),note:$('paymentNote').value.trim()||d.name,createdAt:Date.now()
     });
     const closed=d.balance<=0.005;
@@ -615,7 +637,7 @@
   });
 
   $('toggleBalance').addEventListener('click',()=>{balanceMasked=!balanceMasked;renderDashboard()});
-  $('privacyInfo').addEventListener('click',()=>showToast('Финансовые данные сохраняются только в этом браузере'));
+  $('privacyInfo').addEventListener('click',()=>showToast('Данные локальны. В сеть уходят только очищенные операции, когда ты сам запускаешь AI импорт'));
 
   $('exportBtn').addEventListener('click',()=>{
     const payload=JSON.stringify(state,null,2);
@@ -648,6 +670,41 @@
       persist('Все данные удалены');
     }
   });
+
+  window.FinanceControl={
+    getState:()=>JSON.parse(JSON.stringify(state)),
+    hasExternalId:(externalId)=>Boolean(externalId&&state.transactions.some(t=>t.externalId===externalId)),
+    bulkImportTransactions:(items=[],options={})=>{
+      const preserveAvailableBalance=options.preserveAvailableBalance!==false;
+      const existingIds=new Set(state.transactions.map(t=>t.externalId).filter(Boolean));
+      let added=0,duplicates=0,importedDelta=0;
+      for(const raw of Array.isArray(items)?items:[]){
+        const amount=Math.max(0,Number(raw.amount)||0);
+        const externalId=String(raw.externalId||'').slice(0,180);
+        if(!(amount>0))continue;
+        if(externalId&&existingIds.has(externalId)){duplicates++;continue}
+        const type=raw.type==='income'?'income':'expense';
+        const allowedKinds=['income','expense','transfer','refund','debt_payment'];
+        const kind=allowedKinds.includes(raw.kind)?raw.kind:type;
+        state.transactions.push({
+          id:uid(),type,kind,amount,
+          category:String(raw.category||'Без категории').slice(0,80),
+          date:/^\d{4}-\d{2}-\d{2}$/.test(raw.date||'')?raw.date:today(),
+          note:String(raw.note||'').slice(0,180),
+          merchant:String(raw.merchant||'').slice(0,100),
+          externalId,importedByAI:Boolean(raw.importedByAI),createdAt:Date.now()+added
+        });
+        if(kind!=='transfer')importedDelta+=type==='income'?amount:-amount;
+        if(externalId)existingIds.add(externalId);
+        added++;
+      }
+      if(preserveAvailableBalance&&added)state.settings.startBalance-=importedDelta;
+      persist(added?`Импортировано ${added} операций`:'Новых операций не найдено');
+      return{added,duplicates,importedDelta,preservedBalance:preserveAvailableBalance};
+    },
+    showPage,
+    showToast
+  };
 
   render();
   if('serviceWorker' in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('./sw.js').catch(()=>{});
