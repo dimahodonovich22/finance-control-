@@ -7,6 +7,12 @@
   const qsa=sel=>Array.from(document.querySelectorAll(sel));
   const uid=()=>globalThis.crypto?.randomUUID?.()||`id-${Date.now()}-${Math.random().toString(16).slice(2)}`;
   const clamp=(n,min,max)=>Math.min(max,Math.max(min,Number(n)||0));
+  const parseDecimalInput=value=>{
+    const normalized=String(value??'').trim().replace(/\s+/g,'').replace(',', '.');
+    if(!normalized)return NaN;
+    const n=Number(normalized);
+    return Number.isFinite(n)?n:NaN;
+  };
   const esc=s=>String(s??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
   const today=()=>{const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`};
   const monthKey=()=>today().slice(0,7);
@@ -496,7 +502,7 @@
 
   $('txForm').addEventListener('submit',e=>{
     e.preventDefault();
-    const amount=Number($('txAmount').value);
+    const amount=parseDecimalInput($('txAmount').value);
     if(!(amount>0))return showToast('Укажи сумму больше нуля');
     const id=$('txId').value||uid();
     const existing=state.transactions.find(t=>t.id===id);
@@ -541,7 +547,7 @@
 
   $('debtForm').addEventListener('submit',e=>{
     e.preventDefault();
-    const balance=Number($('debtBalance').value);
+    const balance=parseDecimalInput($('debtBalance').value);
     if(!(balance>0))return showToast('Укажи остаток долга');
     const id=$('debtId').value||uid();
     const existing=state.debts.find(d=>d.id===id);
@@ -550,8 +556,8 @@
       name:$('debtName').value.trim()||'Долг',
       balance,
       original:existing?Math.max(existing.original,balance):balance,
-      apr:Math.max(0,Number($('debtApr').value)||0),
-      min:Math.max(0,Number($('debtMin').value)||0),
+      apr:Math.max(0,parseDecimalInput($('debtApr').value)||0),
+      min:Math.max(0,parseDecimalInput($('debtMin').value)||0),
       due:$('debtDue').value||''
     };
     const i=state.debts.findIndex(d=>d.id===id);
@@ -564,7 +570,6 @@
     $('paymentForm').reset();
     $('paymentDebtId').value=d.id;
     $('paymentAmount').value=d.min>0?Math.min(d.balance,d.min):'';
-    $('paymentAmount').max=String(d.balance);
     $('paymentDate').value=today();
     $('paymentSubtitle').textContent=`${d.name} · осталось ${money2(d.balance)}`;
     openDialog('paymentDialog');
@@ -575,7 +580,7 @@
     e.preventDefault();
     const d=state.debts.find(x=>x.id===$('paymentDebtId').value);
     if(!d)return closeDialog('paymentDialog');
-    const amount=Number($('paymentAmount').value);
+    const amount=parseDecimalInput($('paymentAmount').value);
     if(!(amount>0))return showToast('Укажи сумму платежа');
     const paid=Math.min(amount,d.balance);
     d.balance=Math.max(0,d.balance-paid);
@@ -600,12 +605,12 @@
 
   $('settingsForm').addEventListener('submit',e=>{
     e.preventDefault();
-    state.settings.startBalance=Number($('startBalance').value)||0;
-    state.settings.spendBudget=Math.max(0,Number($('spendBudget').value)||0);
-    state.settings.debtBudget=Math.max(0,Number($('debtBudget').value)||0);
+    state.settings.startBalance=parseDecimalInput($('startBalance').value)||0;
+    state.settings.spendBudget=Math.max(0,parseDecimalInput($('spendBudget').value)||0);
+    state.settings.debtBudget=Math.max(0,parseDecimalInput($('debtBudget').value)||0);
     state.settings.debtStrategy=$('debtStrategy').value==='snowball'?'snowball':'avalanche';
     state.settings.salaryDay=Math.round(clamp($('salaryDay').value,0,31));
-    state.settings.reserveFloor=Math.max(0,Number($('reserveFloor').value)||0);
+    state.settings.reserveFloor=Math.max(0,parseDecimalInput($('reserveFloor').value)||0);
     persist('Настройки сохранены');
   });
 

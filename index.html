@@ -252,12 +252,12 @@
             </div>
             <form id="settingsForm">
               <div class="form-grid">
-                <label class="field"><span>Стартовый баланс (€)</span><input id="startBalance" inputmode="decimal" type="number" step="0.01" placeholder="0" /><small>Баланс на момент начала учёта. Все операции прибавляются к нему или вычитаются.</small></label>
-                <label class="field"><span>Лимит обычных расходов / месяц (€)</span><input id="spendBudget" inputmode="decimal" type="number" step="0.01" min="0" placeholder="0" /><small>Платежи по долгам в этот лимит не входят.</small></label>
-                <label class="field"><span>Бюджет на долги / месяц (€)</span><input id="debtBudget" inputmode="decimal" type="number" step="0.01" min="0" placeholder="0" /><small>Сумма, которую реально готов направлять на все долги ежемесячно.</small></label>
+                <label class="field"><span>Стартовый баланс (€)</span><input id="startBalance" inputmode="decimal" type="text" autocomplete="off" placeholder="0,00" /><small>Баланс на момент начала учёта. Все операции прибавляются к нему или вычитаются.</small></label>
+                <label class="field"><span>Лимит обычных расходов / месяц (€)</span><input id="spendBudget" inputmode="decimal" type="text" autocomplete="off" placeholder="0,00" /><small>Платежи по долгам в этот лимит не входят.</small></label>
+                <label class="field"><span>Бюджет на долги / месяц (€)</span><input id="debtBudget" inputmode="decimal" type="text" autocomplete="off" placeholder="0,00" /><small>Сумма, которую реально готов направлять на все долги ежемесячно.</small></label>
                 <label class="field"><span>Стратегия погашения</span><select id="debtStrategy"><option value="avalanche">Avalanche — высокий % первым</option><option value="snowball">Snowball — маленький долг первым</option></select><small>Можно сменить в любой момент без изменения самих долгов.</small></label>
                 <label class="field"><span>День зарплаты</span><input id="salaryDay" inputmode="numeric" type="number" min="1" max="31" placeholder="например 25" /><small>Необязательно. Нужен только для ориентира до следующей зарплаты.</small></label>
-                <label class="field"><span>Неснижаемый резерв (€)</span><input id="reserveFloor" inputmode="decimal" type="number" step="0.01" min="0" placeholder="0" /><small>Сумма, ниже которой ты не хочешь опускать свободный баланс.</small></label>
+                <label class="field"><span>Неснижаемый резерв (€)</span><input id="reserveFloor" inputmode="decimal" type="text" autocomplete="off" placeholder="0,00" /><small>Сумма, ниже которой ты не хочешь опускать свободный баланс.</small></label>
               </div>
               <div class="form-actions"><button class="primary-btn" type="submit">Сохранить настройки</button></div>
             </form>
@@ -319,7 +319,7 @@
         <input id="txId" type="hidden" />
         <div class="form-grid form-grid-modal">
           <label class="field"><span>Тип</span><select id="txType"><option value="expense">Расход</option><option value="income">Доход</option></select></label>
-          <label class="field"><span>Сумма (€)</span><input id="txAmount" type="number" inputmode="decimal" step="0.01" min="0.01" required /></label>
+          <label class="field"><span>Сумма (€)</span><input id="txAmount" type="text" inputmode="decimal" autocomplete="off" placeholder="0,00" required /></label>
           <label class="field"><span>Категория</span><input id="txCategory" list="categorySuggestions" placeholder="Еда, аренда, зарплата…" required /></label>
           <label class="field"><span>Дата</span><input id="txDate" type="date" required /></label>
           <label class="field field-full"><span>Комментарий</span><input id="txNote" placeholder="Необязательно" /></label>
@@ -341,9 +341,9 @@
         <input id="debtId" type="hidden" />
         <div class="form-grid form-grid-modal">
           <label class="field"><span>Название</span><input id="debtName" placeholder="Карта, кредит, знакомый…" required /></label>
-          <label class="field"><span>Текущий остаток (€)</span><input id="debtBalance" type="number" inputmode="decimal" step="0.01" min="0.01" required /></label>
-          <label class="field"><span>Процент годовых (%)</span><input id="debtApr" type="number" inputmode="decimal" step="0.01" min="0" value="0" /></label>
-          <label class="field"><span>Минимальный платёж (€)</span><input id="debtMin" type="number" inputmode="decimal" step="0.01" min="0" value="0" /></label>
+          <label class="field"><span>Текущий остаток (€)</span><input id="debtBalance" type="text" inputmode="decimal" autocomplete="off" placeholder="0,00" required /></label>
+          <label class="field"><span>Процент годовых (%)</span><input id="debtApr" type="text" inputmode="decimal" autocomplete="off" value="0" /></label>
+          <label class="field"><span>Минимальный платёж (€)</span><input id="debtMin" type="text" inputmode="decimal" autocomplete="off" value="0" /></label>
           <label class="field field-full"><span>Дата следующего платежа</span><input id="debtDue" type="date" /></label>
         </div>
         <div class="sheet-actions"><button class="secondary-btn" type="button" data-close="debtDialog">Отмена</button><button class="primary-btn" type="submit" id="debtSubmit">Добавить долг</button></div>
@@ -361,7 +361,7 @@
       <form id="paymentForm">
         <input id="paymentDebtId" type="hidden" />
         <div class="form-grid form-grid-modal">
-          <label class="field"><span>Сумма (€)</span><input id="paymentAmount" type="number" inputmode="decimal" step="0.01" min="0.01" required /></label>
+          <label class="field"><span>Сумма (€)</span><input id="paymentAmount" type="text" inputmode="decimal" autocomplete="off" placeholder="0,00" required /></label>
           <label class="field"><span>Дата</span><input id="paymentDate" type="date" required /></label>
           <label class="field field-full"><span>Комментарий</span><input id="paymentNote" placeholder="Например: минимальный платёж" /></label>
         </div>
