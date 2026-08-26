@@ -1,7 +1,7 @@
 {
   "name": "Finance Control",
   "short_name": "Finance",
-  "description": "Личный трекер финансов, долгов, плановых платежей, дебиторки, отложенных денег и AI-импорта.",
+  "description": "Finance Control v5 — личные финансы, долги, плановые платежи, отложенные деньги и AI-импорт.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

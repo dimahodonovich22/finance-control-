@@ -1,688 +1,501 @@
-<!doctype html>
+<!DOCTYPE html>
+
 <html lang="ru">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <meta name="theme-color" content="#050607" />
-  <meta name="color-scheme" content="dark" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="Finance Control" />
-  <link rel="manifest" href="manifest.webmanifest" />
-  <link rel="apple-touch-icon" href="apple-touch-icon.png" />
-  <link rel="stylesheet" href="styles-v4.4.css" />
-  <link rel="stylesheet" href="ai-import-v4.4.css" />
-  <title>Finance Control</title>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1,viewport-fit=cover" name="viewport"/>
+<meta content="#050607" name="theme-color"/>
+<meta content="dark" name="color-scheme"/>
+<meta content="yes" name="apple-mobile-web-app-capable"/>
+<meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"/>
+<meta content="Finance Control" name="apple-mobile-web-app-title"/>
+<link href="manifest.webmanifest" rel="manifest"/>
+<link href="apple-touch-icon.png" rel="apple-touch-icon"/>
+<link href="styles-v5.css" rel="stylesheet"/>
+<link href="ai-import-v5.css" rel="stylesheet"/>
+<title>Finance Control</title>
 </head>
 <body>
-  <div class="app-shell" id="app">
-    <header class="topbar">
-      <div class="profile-block">
-        <button class="avatar avatar-button" type="button" id="settingsShortcut" aria-label="Открыть настройки" title="Настройки">F</button>
-        <div class="profile-copy">
-          <span class="micro-label">Личные финансы</span>
-          <h1>Finance Control</h1>
-        </div>
-      </div>
-      <button class="status-pill" type="button" id="privacyInfo" aria-label="О приватности данных">
-        <span class="status-dot"></span>
-        <span>На устройстве</span>
-      </button>
-    </header>
+<div class="app-shell" id="app">
+<header class="topbar">
+<div class="profile-block">
+<button aria-label="Открыть настройки" class="avatar avatar-button" id="settingsShortcut" title="Настройки" type="button">F</button>
+<div class="profile-copy">
+<span class="micro-label">Личные финансы</span>
+<h1>Finance Control</h1>
+</div>
+</div>
+<button aria-label="О приватности данных" class="status-pill" id="privacyInfo" type="button">
+<span class="status-dot"></span>
+<span>На устройстве</span>
+</button>
+</header>
+<main>
+<section class="page" id="dashboard">
+<div class="wallet-carousel-shell">
+<div aria-label="Денежные карманы" class="wallet-carousel" id="walletCarousel">
+<article class="hero-card wallet-slide" data-wallet-slide="available">
+<div class="hero-topline">
+<span class="hero-label">Доступно сейчас</span>
+<button aria-label="Скрыть или показать баланс" class="ghost-icon" data-toggle-balance="" type="button">
+<svg fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M2.5 12s3.6-6 9.5-6 9.5 6 9.5 6-3.6 6-9.5 6-9.5-6-9.5-6Z"></path><circle cx="12" cy="12" r="2.4"></circle></svg>
+</button>
+</div>
+<div class="hero-balance" id="availableMetric">€0</div>
+<div class="hero-meta-row">
+<span class="trend-chip" id="cashflowDelta">Поток €0</span>
+<span class="hero-caption" id="monthCaption">Этот месяц</span>
+</div>
+<div class="hero-actions">
+<button class="hero-action hero-action-primary" id="quickIncome" type="button">
+<span class="action-icon"><svg fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M12 19V5M6.5 10.5 12 5l5.5 5.5" stroke-linecap="round" stroke-linejoin="round"></path></svg></span><span>Доход</span>
+</button>
+<button class="hero-action" id="quickExpense" type="button">
+<span class="action-icon"><svg fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M12 5v14m5.5-5.5L12 19l-5.5-5.5" stroke-linecap="round" stroke-linejoin="round"></path></svg></span><span>Расход</span>
+</button>
+<button class="hero-action" id="quickDebt" type="button">
+<span class="action-icon"><svg fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M12 5v14M5 12h14" stroke-linecap="round"></path></svg></span><span>Долг</span>
+</button>
+</div>
+</article>
+<article class="hero-card wallet-slide savings-card" data-wallet-slide="savings">
+<div class="hero-topline">
+<div class="savings-label-wrap"><span class="hero-label">Отложено</span><span aria-hidden="true" class="savings-lock">резерв</span></div>
+<button aria-label="Скрыть или показать отложенные деньги" class="ghost-icon" data-toggle-balance="" type="button">
+<svg fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M2.5 12s3.6-6 9.5-6 9.5 6 9.5 6-3.6 6-9.5 6-9.5-6-9.5-6Z"></path><circle cx="12" cy="12" r="2.4"></circle></svg>
+</button>
+</div>
+<div class="hero-balance" id="savingsMetric">€0</div>
+<div class="hero-meta-row">
+<span class="trend-chip" id="savingsMonthDelta">Ничего не отложено</span>
+<span class="hero-caption" id="savingsShare">0% всех денег</span>
+</div>
+<div class="savings-goal-strip" id="savingsGoalStrip">
+<div class="savings-goal-copy"><span id="savingsGoalLabel">Цель не задана</span><strong id="savingsGoalValue">Добавить цель</strong></div>
+<div aria-hidden="true" class="savings-goal-track"><span id="savingsGoalProgress"></span></div>
+</div>
+<div class="hero-actions savings-actions">
+<button class="hero-action hero-action-primary" id="saveMoneyBtn" type="button">
+<span class="action-icon"><svg fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M12 4v12m-5-5 5 5 5-5M5 20h14" stroke-linecap="round" stroke-linejoin="round"></path></svg></span><span>Отложить</span>
+</button>
+<button class="hero-action" id="returnMoneyBtn" type="button">
+<span class="action-icon"><svg fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M12 20V8m-5 5 5-5 5 5M5 4h14" stroke-linecap="round" stroke-linejoin="round"></path></svg></span><span>Вернуть</span>
+</button>
+<button class="hero-action" id="savingsGoalBtn" type="button">
+<span class="action-icon"><svg fill="none" stroke="currentColor" viewbox="0 0 24 24"><circle cx="12" cy="12" r="7"></circle><circle cx="12" cy="12" r="2"></circle><path d="M12 3V1M21 12h2" stroke-linecap="round"></path></svg></span><span>Цель</span>
+</button>
+</div>
+</article>
+</div>
+<div aria-label="Выбор денежного кармана" class="wallet-dots" role="tablist">
+<button aria-label="Доступные деньги" aria-selected="true" class="wallet-dot active" data-wallet-dot="0" type="button"></button>
+<button aria-label="Отложенные деньги" aria-selected="false" class="wallet-dot" data-wallet-dot="1" type="button"></button>
+</div>
+</div>
+<div class="setup-banner hidden" id="setupBanner">
+<div>
+<span class="micro-label">Начало работы</span>
+<strong>Задай стартовый баланс и месячные лимиты</strong>
+<p>После этого главная страница начнёт давать полезные ориентиры.</p>
+</div>
+<button class="secondary-btn" data-go="settings" type="button">Настроить</button>
+</div>
 
-    <main>
-      <section id="dashboard" class="page">
-        <div class="wallet-carousel-shell">
-          <div class="wallet-carousel" id="walletCarousel" aria-label="Денежные карманы">
-            <article class="hero-card wallet-slide" data-wallet-slide="available">
-              <div class="hero-topline">
-                <span class="hero-label">Доступно сейчас</span>
-                <button class="ghost-icon" type="button" data-toggle-balance aria-label="Скрыть или показать баланс">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M2.5 12s3.6-6 9.5-6 9.5 6 9.5 6-3.6 6-9.5 6-9.5-6-9.5-6Z"/><circle cx="12" cy="12" r="2.4"/></svg>
-                </button>
-              </div>
-              <div class="hero-balance" id="availableMetric">€0</div>
-              <div class="hero-meta-row">
-                <span class="trend-chip" id="cashflowDelta">Поток €0</span>
-                <span class="hero-caption" id="monthCaption">Этот месяц</span>
-              </div>
-              <div class="hero-actions">
-                <button class="hero-action hero-action-primary" id="quickIncome" type="button">
-                  <span class="action-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 19V5M6.5 10.5 12 5l5.5 5.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span>Доход</span>
-                </button>
-                <button class="hero-action" id="quickExpense" type="button">
-                  <span class="action-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 5v14m5.5-5.5L12 19l-5.5-5.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span>Расход</span>
-                </button>
-                <button class="hero-action" id="quickDebt" type="button">
-                  <span class="action-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 5v14M5 12h14" stroke-linecap="round"/></svg></span><span>Долг</span>
-                </button>
-              </div>
-            </article>
 
-            <article class="hero-card wallet-slide savings-card" data-wallet-slide="savings">
-              <div class="hero-topline">
-                <div class="savings-label-wrap"><span class="hero-label">Отложено</span><span class="savings-lock" aria-hidden="true">резерв</span></div>
-                <button class="ghost-icon" type="button" data-toggle-balance aria-label="Скрыть или показать отложенные деньги">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M2.5 12s3.6-6 9.5-6 9.5 6 9.5 6-3.6 6-9.5 6-9.5-6-9.5-6Z"/><circle cx="12" cy="12" r="2.4"/></svg>
-                </button>
-              </div>
-              <div class="hero-balance" id="savingsMetric">€0</div>
-              <div class="hero-meta-row">
-                <span class="trend-chip" id="savingsMonthDelta">Ничего не отложено</span>
-                <span class="hero-caption" id="savingsShare">0% всех денег</span>
-              </div>
-              <div class="savings-goal-strip" id="savingsGoalStrip">
-                <div class="savings-goal-copy"><span id="savingsGoalLabel">Цель не задана</span><strong id="savingsGoalValue">Добавить цель</strong></div>
-                <div class="savings-goal-track" aria-hidden="true"><span id="savingsGoalProgress"></span></div>
-              </div>
-              <div class="hero-actions savings-actions">
-                <button class="hero-action hero-action-primary" id="saveMoneyBtn" type="button">
-                  <span class="action-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 4v12m-5-5 5 5 5-5M5 20h14" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span>Отложить</span>
-                </button>
-                <button class="hero-action" id="returnMoneyBtn" type="button">
-                  <span class="action-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 20V8m-5 5 5-5 5 5M5 4h14" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span>Вернуть</span>
-                </button>
-                <button class="hero-action" id="savingsGoalBtn" type="button">
-                  <span class="action-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2"/><path d="M12 3V1M21 12h2" stroke-linecap="round"/></svg></span><span>Цель</span>
-                </button>
-              </div>
-            </article>
-          </div>
-          <div class="wallet-dots" role="tablist" aria-label="Выбор денежного кармана">
-            <button type="button" class="wallet-dot active" data-wallet-dot="0" aria-label="Доступные деньги" aria-selected="true"></button>
-            <button type="button" class="wallet-dot" data-wallet-dot="1" aria-label="Отложенные деньги" aria-selected="false"></button>
-          </div>
-        </div>
 
-        <div class="setup-banner hidden" id="setupBanner">
-          <div>
-            <span class="micro-label">Начало работы</span>
-            <strong>Задай стартовый баланс и месячные лимиты</strong>
-            <p>После этого главная страница начнёт давать полезные ориентиры.</p>
-          </div>
-          <button class="secondary-btn" type="button" data-go="settings">Настроить</button>
-        </div>
 
-        <section class="metric-strip" aria-label="Ключевые показатели">
-          <article class="metric-card">
-            <span class="metric-label">Доход</span>
-            <strong id="incomeMetric">€0</strong>
-            <span id="incomeSub">за месяц</span>
-          </article>
-          <article class="metric-card">
-            <span class="metric-label">Расходы</span>
-            <strong id="expenseMetric">€0</strong>
-            <span id="expenseSub">без долгов</span>
-          </article>
-          <article class="metric-card">
-            <span class="metric-label">Общий долг</span>
-            <strong id="debtMetric">€0</strong>
-            <span id="debtSub">нет долгов</span>
-          </article>
-          <article class="metric-card">
-            <span class="metric-label">Безопасно / день</span>
-            <strong id="safeDailyMetric">—</strong>
-            <span id="safeDailySub">задай лимит</span>
-          </article>
-        </section>
 
-        <section class="section-grid section-grid-main">
-          <div class="content-column">
-            <div class="section-header">
-              <div>
-                <span class="micro-label">Активность</span>
-                <h2>Последние операции</h2>
-              </div>
-              <button class="text-btn" type="button" data-go="transactions">Все операции</button>
-            </div>
-            <div class="surface list-surface"><div id="recentList" class="transaction-list"></div></div>
-          </div>
+<section aria-label="Ключевые показатели" class="metric-strip">
+<article class="metric-card"><span class="metric-label">Расходы месяца</span><strong id="expenseMetric">€0</strong><span id="expenseSub">обычные расходы</span></article>
+<article class="metric-card metric-card-highlight"><span class="metric-label">Безопасно / день</span><strong id="safeDailyMetric">—</strong><span id="safeDailySub">до зарплаты</span></article>
+<article class="metric-card"><span class="metric-label">Я должен</span><strong id="debtMetric">€0</strong><span id="debtSub">нет долгов</span></article>
+<article class="metric-card"><span class="metric-label">Мне должны</span><strong id="receivableMetric">€0</strong><span id="receivableMetricSub">никто не должен</span></article>
+</section>
+<section class="daily-brief-section">
+<div class="section-header compact-section-header"><div><span class="micro-label">Что дальше</span><h2>Ближайшее</h2></div><button class="text-btn" data-go="plans" type="button">Весь план</button></div>
+<div class="surface daily-brief" id="nextActionCard"></div>
+</section>
+<section class="recent-section">
+<div class="section-header compact-section-header"><div><span class="micro-label">Активность</span><h2>Последние операции</h2></div><button class="text-btn" data-go="transactions" type="button">Все операции</button></div>
+<div class="surface list-surface"><div class="transaction-list" id="recentList"></div></div>
+</section>
+</section>
+<section class="page hidden" id="transactions">
+<div class="page-heading">
+<div>
+<span class="micro-label">История</span>
+<h2>Операции</h2>
+<p>Доходы, расходы и платежи по долгам в одном месте.</p>
+</div>
+<div class="heading-actions">
+<button class="secondary-btn ai-entry-btn" data-go="import" type="button">
+<span class="ai-spark">✦</span><span>Импорт</span>
+</button>
+<button class="primary-btn" id="addTxBtn" type="button">+ Добавить</button>
+</div>
+</div>
+<div class="toolbar-card">
+<label class="search-box" for="txSearch">
+<svg fill="none" stroke="currentColor" viewbox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4.1-4.1" stroke-linecap="round"></path></svg>
+<input id="txSearch" placeholder="Поиск по категории или заметке" type="search"/>
+</label>
+<div aria-label="Фильтр операций" class="filter-row" role="group"><button class="filter-chip active" data-filter="all" type="button">Все</button><button class="filter-chip" data-filter="expense" type="button">Расходы</button><button class="filter-chip" data-filter="income" type="button">Доходы</button><button class="filter-chip filter-more" id="moreFilterBtn" type="button">Фильтры</button></div>
+</div>
+<div class="surface list-surface"><div class="transaction-list" id="txList"></div></div><button class="load-more-btn hidden" id="loadMoreTxBtn" type="button">Показать ещё</button>
+</section>
+<section class="page hidden" id="import">
+<div class="page-heading import-heading">
+<div>
+<span class="micro-label">AI Import</span>
+<h2>Импорт выписки</h2>
+<p>Выбери простой путь: готовый JSON или банковскую выписку. Технические настройки AI спрятаны отдельно.</p>
+</div>
+<button class="secondary-btn" data-go="transactions" type="button">← Операции</button>
+</div>
+<div class="ai-privacy-note">
+<span class="privacy-shield">✓</span>
+<div><strong>Приватность по умолчанию</strong><p>CSV перед AI очищается от IBAN, длинных номеров карт и похожих идентификаторов. Готовый JSON разбирается полностью на устройстве и вообще не отправляется в OpenAI.</p></div>
+</div>
+<section class="import-grid">
+<article class="import-card import-source-card">
+<div class="import-card-head">
+<div><span class="step-number">1</span><span class="micro-label">Источник</span><h3>Банковская выписка</h3></div>
+<span class="connection-pill" id="aiConnectionBadge"><span></span>Не проверено</span>
+</div>
+<label class="drop-zone" for="bankFile" id="bankDropZone">
+<input accept=".csv,.txt,text/csv,text/plain" id="bankFile" type="file"/>
+<span class="drop-icon">↥</span>
+<strong id="bankFileLabel">Выбрать CSV</strong>
+<span>Поддерживаются CSV/TXT до 10 МБ · данные сначала читаются локально</span>
+</label>
+<div class="file-summary hidden" id="fileSummary"></div>
+<div class="mapping-panel hidden" id="mappingPanel">
+<div class="mapping-intro"><strong>Проверь колонки</strong><span>Мы постарались определить их автоматически.</span></div>
+<div class="form-grid mapping-grid">
+<label class="field"><span>Дата</span><select id="mapDate"></select></label>
+<label class="field"><span>Описание</span><select id="mapDescription"></select></label>
+<label class="field"><span>Сумма</span><select id="mapAmount"></select><small>Используй, если расходы отрицательные, а поступления положительные.</small></label>
+<label class="field"><span>Расход отдельно</span><select id="mapDebit"></select><small>Необязательно, если есть одна колонка «Сумма».</small></label>
+<label class="field"><span>Доход отдельно</span><select id="mapCredit"></select><small>Необязательно, если есть одна колонка «Сумма».</small></label>
+</div>
+<div class="sheet-actions import-actions"><button class="primary-btn" id="prepareImportBtn" type="button">Подготовить операции</button></div>
+</div>
+</article>
+<details class="advanced-ai-details"><summary>Настройки AI / Supabase</summary><article class="import-card ai-connect-card">
+<div class="import-card-head">
+<div><span class="step-number">2</span><span class="micro-label">Supabase</span><h3>Подключение AI</h3></div>
+</div>
+<p class="import-copy">OpenAI API key хранится только в Supabase Edge Function. В браузере сохраняются URL функции и твой личный access token.</p>
+<div class="connect-preview">
+<div><span>Browser</span><strong>Finance Control</strong></div><i>→</i><div><span>Supabase</span><strong>Edge Function</strong></div><i>→</i><div><span>OpenAI</span><strong>GPT classifier</strong></div>
+</div>
+<button class="secondary-btn full-btn" id="openAiSettingsBtn" type="button">Настроить подключение</button>
+</article></details>
+<article class="import-card prepared-file-card">
+<div class="prepared-file-copy">
+<div class="import-card-head">
+<div><span class="step-number">БЕЗ API</span><span class="micro-label">Готовые данные</span><h3>Finance Control JSON</h3></div>
+<span class="connection-pill ok"><span></span>Локально</span>
+</div>
+<p class="import-copy">Если выписку уже разобрал ChatGPT, загрузи подготовленный JSON. Категории, типы и продавцы уже будут внутри — останется только проверить и подтвердить импорт.</p>
+<button class="secondary-btn template-btn" id="downloadPreparedTemplateBtn" type="button">Скачать шаблон JSON</button>
+</div>
+<div class="prepared-file-upload">
+<label class="drop-zone compact-drop" for="preparedFile" id="preparedDropZone">
+<input accept="application/json,.json" id="preparedFile" type="file"/>
+<span class="drop-icon">✓</span>
+<strong id="preparedFileLabel">Выбрать готовый JSON</strong>
+<span>Формат Finance Control Prepared Import v1 · файл читается только на устройстве</span>
+</label>
+<div class="file-summary prepared-file-summary hidden" id="preparedFileSummary"></div>
+</div>
+</article>
+</section>
+<section class="prepared-section hidden" id="preparedSection">
+<div class="section-header prepared-header">
+<div><span class="micro-label">Готово к анализу</span><h2>Операции из файла</h2></div>
+<div class="prepared-actions"><button class="secondary-btn" id="resetImportBtn" type="button">Другой файл</button><button class="primary-btn" id="analyzeAiBtn" type="button"><span class="ai-spark">✦</span> Разобрать с AI</button></div>
+</div>
+<div class="import-stats" id="importStats"></div>
+<div class="import-balance-note"><strong>Текущий баланс останется прежним.</strong><span>История добавится в аналитику, а стартовый баланс автоматически скорректируется на чистый поток импортированных операций.</span></div>
+<div class="analysis-progress hidden" id="analysisProgress"><div class="analysis-progress-top"><span id="analysisProgressText">AI анализирует…</span><strong id="analysisProgressPct">0%</strong></div><div class="progress"><span id="analysisProgressBar" style="width:0%"></span></div></div>
+<div class="surface raw-preview-surface"><div class="raw-preview" id="rawPreview"></div></div>
+</section>
+<section class="review-section hidden" id="reviewSection">
+<div class="section-header review-header">
+<div><span class="micro-label">Проверка</span><h2>Перед импортом</h2></div>
+<span class="review-count" id="reviewCount"></span>
+</div>
+<div class="review-toolbar">
+<label class="search-box" for="reviewSearch"><svg fill="none" stroke="currentColor" viewbox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4.1-4.1" stroke-linecap="round"></path></svg><input id="reviewSearch" placeholder="Поиск по операции или категории" type="search"/></label>
+<div class="filter-row review-filters"><button class="filter-chip active" data-review-filter="all" type="button">Все</button><button class="filter-chip" data-review-filter="review" type="button">Нужно проверить</button><button class="filter-chip" data-review-filter="expense" type="button">Расходы</button><button class="filter-chip" data-review-filter="income" type="button">Доходы</button></div>
+</div>
+<div class="review-list" id="reviewList"></div>
+<div class="import-final-bar"><div><span id="selectedImportSummary">0 выбрано</span><small id="duplicateSummary">Дубликаты будут пропущены автоматически</small></div><button class="primary-btn" id="commitImportBtn" type="button">Импортировать</button></div>
+</section>
+</section>
+<section class="page hidden" id="debts">
+<div class="page-heading debt-page-heading">
+<div><span class="micro-label">Debt center</span><h2>Долги</h2><p>В одном месте: сколько должен ты и сколько должны тебе.</p></div>
+<button class="primary-btn" id="debtAddContextBtn" type="button">+ Добавить долг</button>
+</div>
+<div aria-label="Вид долгов" class="segmented-control debt-segments" role="tablist">
+<button aria-selected="true" class="segment active" data-debt-view="owed" type="button">Я должен</button>
+<button aria-selected="false" class="segment" data-debt-view="receivable" type="button">Мне должны</button>
+</div>
+<div id="owedDebtsView">
+<section class="debt-overview-grid">
+<article class="overview-card"><span>Остаток</span><strong id="debtTotalSummary">€0</strong><small id="debtCountSummary">0 активных</small></article>
+<article class="overview-card"><span>Минимумы / мес.</span><strong id="minPaymentsSummary">€0</strong><small id="debtBudgetSummary">бюджет не задан</small></article>
+<article class="overview-card"><span>Прогноз</span><strong id="payoffSummary">—</strong><small id="payoffDateSummary">нужны данные</small></article>
+<article class="overview-card"><span>Расчётные проценты</span><strong id="interestSummary">—</strong><small>по текущему плану</small></article>
+</section>
+<section class="section-block"><div class="section-header"><div><span class="micro-label">Активные долги</span><h2>Порядок погашения</h2></div><span class="section-hint" id="strategyCaption">avalanche</span></div><div class="debt-card-grid" id="debtList"></div></section>
+<details class="archive-details" id="closedDebtsSection"><summary>Закрытые долги <span id="closedDebtCount">0</span></summary><div class="closed-debt-list" id="closedDebtList"></div></details>
+<section class="section-grid section-grid-main debt-analysis-grid">
+<div class="content-column"><div class="section-header"><div><span class="micro-label">План</span><h2>Прогноз погашения</h2></div></div><div class="surface plan-surface" id="planPanel"></div></div>
+<div class="content-column"><div class="section-header"><div><span class="micro-label">Сравнение</span><h2>Avalanche vs Snowball</h2></div></div><div class="surface compare-surface" id="strategyCompare"></div></div>
+</section>
+</div>
+<div class="hidden" id="receivableDebtsView">
+<section class="debt-overview-grid receivable-overview-grid">
+<article class="overview-card"><span>Мне должны</span><strong id="receivableTotalSummary">€0</strong><small id="receivableCountSummary">0 записей</small></article>
+<article class="overview-card"><span>Просрочено</span><strong id="receivableOverdueSummary">€0</strong><small id="receivableOverdueCount">всё вовремя</small></article>
+<article class="overview-card"><span>Ближайший возврат</span><strong id="receivableNextAmount">—</strong><small id="receivableNextLabel">ничего не ожидается</small></article>
+<article class="overview-card"><span>Уже вернули</span><strong id="receivableSettledSummary">€0</strong><small id="receivableSettledCount">0 закрытых</small></article>
+</section>
+<section class="section-block"><div class="section-header"><div><span class="micro-label">К получению</span><h2>Мне должны</h2></div><span class="section-hint">галочка = вернули</span></div><div class="surface plan-list-surface" id="receivableList"></div></section>
+</div>
+</section>
+<section class="page hidden" id="plans">
+<div class="page-heading plan-page-heading">
+<div><span class="micro-label">Money planner</span><h2>План</h2><p>Будущие обязательные платежи. Деньги, которые должны тебе, находятся в разделе «Долги».</p></div>
+<button class="primary-btn" id="addScheduledBtn" type="button">+ Платёж</button>
+</div>
+<section class="debt-overview-grid plan-overview-grid">
+<article class="overview-card"><span>К оплате</span><strong id="scheduledTotalSummary">€0</strong><small id="scheduledCountSummary">0 платежей</small></article>
+<article class="overview-card"><span>До зарплаты</span><strong id="scheduledPaydaySummary">€0</strong><small id="scheduledPaydayLabel">задай день зарплаты</small></article>
+<article class="overview-card"><span>Следующий</span><strong id="scheduledNextAmount">—</strong><small id="scheduledNextSummary">ничего не запланировано</small></article>
+<article class="overview-card"><span>Минимумы по долгам</span><strong id="debtDueSummary">€0</strong><small id="debtDueCount">нет ближайших</small></article>
+</section>
+<section class="section-block"><div class="section-header"><div><span class="micro-label">Обязательные платежи</span><h2>Запланировано</h2></div><span class="section-hint">галочка = оплачено</span></div><div class="surface plan-list-surface" id="scheduledList"></div></section>
+<section class="section-block" id="debtObligationSection"><div class="section-header"><div><span class="micro-label">Автоматически из долгов</span><h2>Минимальные платежи</h2></div><button class="text-btn" data-go="debts" type="button">Открыть долги</button></div><div class="surface plan-list-surface" id="debtObligationsList"></div></section>
+</section>
+<section class="page hidden" id="settings">
+<div class="page-heading">
+<div>
+<span class="micro-label">Параметры</span>
+<h2>Настройки</h2>
+<p>Все финансовые данные остаются только в этом браузере.</p>
+</div>
+</div>
+<div class="settings-grid">
+<section class="settings-card">
+<div class="settings-head">
+<div>
+<span class="micro-label">База</span>
+<h3>Основные числа</h3>
+</div>
+</div>
+<form id="settingsForm">
+<div class="form-grid">
+<label class="field"><span>Стартовый баланс (€)</span><input autocomplete="off" id="startBalance" inputmode="decimal" placeholder="0,00" type="text"/><small>Доступные деньги на момент начала учёта. Переводы в «Отложено» уменьшают доступный баланс, но не считаются расходом.</small></label>
+<label class="field"><span>Лимит обычных расходов / месяц (€)</span><input autocomplete="off" id="spendBudget" inputmode="decimal" placeholder="0,00" type="text"/><small>Платежи по долгам в этот лимит не входят.</small></label>
+<label class="field"><span>Бюджет на долги / месяц (€)</span><input autocomplete="off" id="debtBudget" inputmode="decimal" placeholder="0,00" type="text"/><small>Сумма, которую реально готов направлять на все долги ежемесячно.</small></label>
+<label class="field"><span>Стратегия погашения</span><select id="debtStrategy"><option value="avalanche">Avalanche — высокий % первым</option><option value="snowball">Snowball — маленький долг первым</option></select><small>Можно сменить в любой момент без изменения самих долгов.</small></label>
+<label class="field"><span>День зарплаты</span><input id="salaryDay" inputmode="numeric" max="31" min="1" placeholder="например 25" type="number"/><small>Необязательно. Нужен только для ориентира до следующей зарплаты.</small></label>
+<label class="field"><span>Неснижаемый резерв (€)</span><input autocomplete="off" id="reserveFloor" inputmode="decimal" placeholder="0,00" type="text"/><small>Сумма, ниже которой ты не хочешь опускать свободный баланс.</small></label>
+</div>
+<div class="form-actions"><button class="primary-btn" type="submit">Сохранить настройки</button></div>
+</form>
+</section>
+<section class="settings-card">
+<div class="settings-head"><div><span class="micro-label">Резервная копия</span><h3>Данные</h3></div></div>
+<div class="data-actions">
+<button class="secondary-btn" id="exportBtn" type="button">Экспорт JSON</button><p class="backup-status" id="backupStatus">Резервная копия ещё не создавалась.</p>
+<button class="secondary-btn" id="importBtn" type="button">Импорт JSON</button>
+<input accept="application/json,.json" class="file-input" id="importFile" type="file"/>
+</div>
+<p class="settings-note">Экспортируй резервную копию перед очисткой Safari, сменой телефона или крупными изменениями.</p>
+</section>
+<section class="settings-card ai-settings-card" id="aiSettingsCard">
+<div class="settings-head"><div><span class="micro-label">AI Import</span><h3>Supabase подключение</h3></div><span class="connection-pill compact" id="settingsConnectionBadge"><span></span>Не проверено</span></div>
+<div class="ai-settings-fields">
+<label class="field"><span>URL Edge Function</span><input autocomplete="off" id="aiFunctionUrl" inputmode="url" placeholder="https://PROJECT.supabase.co/functions/v1/classify-transactions" type="url"/><small>URL не является секретом.</small></label>
+<label class="field"><span>Личный access token</span><input autocomplete="off" id="aiAccessToken" placeholder="Введи FINANCE_ACCESS_TOKEN" type="password"/><small>Хранится только локально на этом устройстве. Не попадает в JSON backup.</small></label>
+</div>
+<div class="data-actions"><button class="primary-btn" id="saveAiConfigBtn" type="button">Сохранить</button><button class="secondary-btn" id="testAiBtn" type="button">Проверить соединение</button></div>
+<p class="settings-note">OpenAI API key сюда вводить не нужно — он должен быть секретом <strong>OPENAI_API_KEY</strong> внутри Supabase.</p>
+</section>
+<section class="settings-card">
+<div class="settings-head"><div><span class="micro-label">Приватность</span><h3>Как хранятся данные</h3></div></div>
+<p class="settings-note settings-note-first">Операции, долги и настройки записываются в localStorage текущего браузера. Только когда ты сам запускаешь AI-анализ, очищенные строки выбранных банковских операций отправляются через твою Supabase Edge Function в OpenAI.</p>
+<div class="privacy-list">
+<div><span class="status-dot"></span><span>Обычная работа приложения — полностью локальная</span></div>
+<div><span class="status-dot"></span><span>Основные функции работают офлайн после первой загрузки</span></div>
+<div><span class="status-dot"></span><span>Можно установить как PWA на iPhone</span></div>
+</div>
+</section>
+<section class="settings-card danger-card">
+<div class="settings-head"><div><span class="micro-label">Опасная зона</span><h3>Удалить данные</h3></div></div>
+<button class="danger-btn" id="resetBtn" type="button">Удалить всё локально</button>
+<p class="settings-note">Действие нельзя отменить. Лучше сначала сделать экспорт.</p>
+</section>
+</div>
+</section>
+</main>
+</div>
+<nav aria-label="Навигация" class="bottom-nav">
+<button aria-label="Главная" class="nav-item active" data-tab="dashboard" type="button">
+<svg fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="m4 10 8-6 8 6v9a1 1 0 0 1-1 1h-5v-6h-4v6H5a1 1 0 0 1-1-1z" stroke-linejoin="round"></path></svg><span>Главная</span>
+</button>
+<button aria-label="Операции" class="nav-item" data-tab="transactions" type="button">
+<svg fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M5 7h14M5 12h10M5 17h6" stroke-linecap="round"></path></svg><span>Операции</span>
+</button>
+<button aria-label="Долги" class="nav-item" data-tab="debts" type="button">
+<svg fill="none" stroke="currentColor" viewbox="0 0 24 24"><rect height="12" rx="2" width="16" x="4" y="6"></rect><path d="M8 10h5M17 10v4" stroke-linecap="round"></path></svg><span>Долги</span>
+</button>
+<button aria-label="План" class="nav-item" data-tab="plans" type="button">
+<svg fill="none" stroke="currentColor" viewbox="0 0 24 24"><rect height="14.5" rx="2" width="16" x="4" y="5.5"></rect><path d="M8 3.5v4M16 3.5v4M4 10h16M8 14h3M8 17h6" stroke-linecap="round"></path></svg><span>План</span>
+</button>
+</nav>
+<dialog id="txDialog">
+<div class="sheet">
+<div aria-hidden="true" class="sheet-handle"></div>
+<div class="sheet-head">
+<div><span class="micro-label">Операция</span><h2 id="txDialogTitle">Новая операция</h2><p>Сразу попадёт в баланс и месячную статистику.</p></div>
+<button aria-label="Закрыть" class="close-btn" data-close="txDialog" type="button">×</button>
+</div>
+<form id="txForm">
+<input id="txId" type="hidden"/>
+<div class="form-grid form-grid-modal">
+<label class="field"><span>Тип</span><select id="txType"><option value="expense">Расход</option><option value="income">Доход</option></select></label>
+<label class="field"><span>Сумма (€)</span><input autocomplete="off" id="txAmount" inputmode="decimal" placeholder="0,00" required="" type="text"/></label>
+<label class="field"><span>Категория</span><input id="txCategory" list="categorySuggestions" placeholder="Еда, аренда, зарплата…" required=""/></label>
+<label class="field"><span>Дата</span><input id="txDate" required="" type="date"/></label>
+<label class="field field-full"><span>Комментарий</span><input id="txNote" placeholder="Необязательно"/></label>
+</div>
+<datalist id="categorySuggestions"><option value="Зарплата"><option value="Прочий доход"><option value="Еда"><option value="Рестораны"><option value="Аренда/Жильё"><option value="Коммунальные"><option value="Транспорт"><option value="Топливо"><option value="Авто"><option value="Покупки"><option value="Развлечения"><option value="Подписки"><option value="Здоровье"><option value="Спорт"><option value="Путешествия"><option value="Страхование"><option value="Налоги/Сборы"><option value="Наличные"><option value="Погашение долга"><option value="Возврат долга мне"><option value="Другое"></option></option></option></option></option></option></option></option></option></option></option></option></option></option></option></option></option></option></option></option></option></datalist>
+<div class="sheet-actions"><button class="secondary-btn" data-close="txDialog" type="button">Отмена</button><button class="primary-btn" id="txSubmit" type="submit">Добавить</button></div>
+</form>
+</div>
+</dialog>
+<dialog id="debtDialog">
+<div class="sheet">
+<div aria-hidden="true" class="sheet-handle"></div>
+<div class="sheet-head">
+<div><span class="micro-label">Долг</span><h2 id="debtDialogTitle">Новый долг</h2><p>Остаток, ставка, минимум и дата следующего платежа.</p></div>
+<button aria-label="Закрыть" class="close-btn" data-close="debtDialog" type="button">×</button>
+</div>
+<form id="debtForm">
+<input id="debtId" type="hidden"/>
+<div class="form-grid form-grid-modal">
+<label class="field"><span>Название</span><input id="debtName" placeholder="Карта, кредит, знакомый…" required=""/></label>
+<label class="field"><span>Текущий остаток (€)</span><input autocomplete="off" id="debtBalance" inputmode="decimal" placeholder="0,00" required="" type="text"/></label>
+<label class="field"><span>Процент годовых (%)</span><input autocomplete="off" id="debtApr" inputmode="decimal" type="text" value="0"/></label>
+<label class="field"><span>Минимальный платёж (€)</span><input autocomplete="off" id="debtMin" inputmode="decimal" type="text" value="0"/></label>
+<label class="field field-full"><span>Дата следующего платежа</span><input id="debtDue" type="date"/></label>
+</div>
+<div class="sheet-actions"><button class="secondary-btn" data-close="debtDialog" type="button">Отмена</button><button class="primary-btn" id="debtSubmit" type="submit">Добавить долг</button></div>
+</form>
+</div>
+</dialog>
+<dialog id="paymentDialog">
+<div class="sheet">
+<div aria-hidden="true" class="sheet-handle"></div>
+<div class="sheet-head">
+<div><span class="micro-label">Платёж</span><h2>Записать платёж</h2><p id="paymentSubtitle">Платёж уменьшит долг и добавится в расходы.</p></div>
+<button aria-label="Закрыть" class="close-btn" data-close="paymentDialog" type="button">×</button>
+</div>
+<form id="paymentForm">
+<input id="paymentDebtId" type="hidden"/>
+<div class="form-grid form-grid-modal">
+<label class="field"><span>Сумма (€)</span><input autocomplete="off" id="paymentAmount" inputmode="decimal" placeholder="0,00" required="" type="text"/></label>
+<label class="field"><span>Дата</span><input id="paymentDate" required="" type="date"/></label>
+<label class="field field-full"><span>Комментарий</span><input id="paymentNote" placeholder="Например: минимальный платёж"/></label>
+</div>
+<div class="sheet-actions"><button class="secondary-btn" data-close="paymentDialog" type="button">Отмена</button><button class="primary-btn" type="submit">Записать платёж</button></div>
+</form>
+</div>
+</dialog>
+<dialog id="scheduledDialog">
+<div class="sheet">
+<div aria-hidden="true" class="sheet-handle"></div>
+<div class="sheet-head">
+<div><span class="micro-label">Обязательный платёж</span><h2 id="scheduledDialogTitle">Новый платёж</h2><p>До оплаты сумма резервируется в плане. Галочка «Оплачено» автоматически создаст расход.</p></div>
+<button aria-label="Закрыть" class="close-btn" data-close="scheduledDialog" type="button">×</button>
+</div>
+<form id="scheduledForm">
+<input id="scheduledId" type="hidden"/>
+<div class="form-grid form-grid-modal">
+<label class="field"><span>Название</span><input id="scheduledName" placeholder="Аренда, страховка, счёт…" required=""/></label>
+<label class="field"><span>Сумма (€)</span><input autocomplete="off" id="scheduledAmount" inputmode="decimal" placeholder="0,00" required="" type="text"/></label>
+<label class="field"><span>Оплатить до</span><input id="scheduledDue" required="" type="date"/></label>
+<label class="field"><span>Категория</span><input id="scheduledCategory" list="categorySuggestions" placeholder="Аренда/Жильё" required=""/></label><label class="field"><span>Повтор</span><select id="scheduledRecurrence"><option value="once">Один раз</option><option value="monthly">Каждый месяц</option><option value="yearly">Каждый год</option></select><small>После оплаты следующий платёж создастся автоматически.</small></label>
+<label class="field field-full"><span>Комментарий</span><input id="scheduledNote" placeholder="Необязательно"/></label>
+</div>
+<div class="sheet-actions"><button class="secondary-btn" data-close="scheduledDialog" type="button">Отмена</button><button class="primary-btn" id="scheduledSubmit" type="submit">Добавить платёж</button></div>
+</form>
+</div>
+</dialog>
+<dialog id="receivableDialog">
+<div class="sheet">
+<div aria-hidden="true" class="sheet-handle"></div>
+<div class="sheet-head">
+<div><span class="micro-label">Мне должны</span><h2 id="receivableDialogTitle">Новая запись</h2><p>Деньги не попадут в доступный баланс, пока ты не отметишь, что их вернули.</p></div>
+<button aria-label="Закрыть" class="close-btn" data-close="receivableDialog" type="button">×</button>
+</div>
+<form id="receivableForm">
+<input id="receivableId" type="hidden"/>
+<div class="form-grid form-grid-modal">
+<label class="field"><span>Кто должен</span><input id="receivablePerson" placeholder="Имя или компания" required=""/></label>
+<label class="field"><span>Сумма (€)</span><input autocomplete="off" id="receivableAmount" inputmode="decimal" placeholder="0,00" required="" type="text"/></label><label class="field field-full"><span>Как учитывать деньги</span><select id="receivableMode"><option value="record_only">Просто записать — баланс не менять</option><option value="gave_now">Я сейчас дал эти деньги — убрать из доступных</option></select><small>Если деньги уже ушли банковской операцией, открой ту операцию и выбери «Мне должны эти деньги».</small></label>
+<label class="field"><span>Вернуть до</span><input id="receivableDue" type="date"/></label>
+<label class="field field-full"><span>Комментарий</span><input id="receivableNote" placeholder="За что или при каких условиях"/></label>
+</div>
+<div class="sheet-actions"><button class="secondary-btn" data-close="receivableDialog" type="button">Отмена</button><button class="primary-btn" id="receivableSubmit" type="submit">Добавить запись</button></div>
+</form>
+</div>
+</dialog>
+<dialog id="savingsTransferDialog">
+<div class="sheet">
+<div aria-hidden="true" class="sheet-handle"></div>
+<div class="sheet-head">
+<div><span class="micro-label">Денежный карман</span><h2 id="savingsTransferTitle">Отложить деньги</h2><p id="savingsTransferSubtitle">Сумма уйдёт из доступных, но не будет считаться расходом.</p></div>
+<button aria-label="Закрыть" class="close-btn" data-close="savingsTransferDialog" type="button">×</button>
+</div>
+<form id="savingsTransferForm">
+<input id="savingsTransferDirection" type="hidden" value="to_savings"/>
+<div class="form-grid form-grid-modal">
+<label class="field"><span>Сумма (€)</span><input autocomplete="off" id="savingsTransferAmount" inputmode="decimal" placeholder="0,00" required="" type="text"/></label>
+<label class="field"><span>Дата</span><input id="savingsTransferDate" required="" type="date"/></label>
+<label class="field field-full"><span>Комментарий</span><input id="savingsTransferNote" placeholder="Например: финансовая подушка"/></label>
+</div>
+<div class="sheet-actions"><button class="secondary-btn" data-close="savingsTransferDialog" type="button">Отмена</button><button class="primary-btn" id="savingsTransferSubmit" type="submit">Отложить</button></div>
+</form>
+</div>
+</dialog>
+<dialog id="savingsGoalDialog">
+<div class="sheet">
+<div aria-hidden="true" class="sheet-handle"></div>
+<div class="sheet-head">
+<div><span class="micro-label">Цель накопления</span><h2>Цель для отложенных</h2><p>Не влияет на баланс — только показывает прогресс.</p></div>
+<button aria-label="Закрыть" class="close-btn" data-close="savingsGoalDialog" type="button">×</button>
+</div>
+<form id="savingsGoalForm">
+<div class="form-grid form-grid-modal">
+<label class="field"><span>Название цели</span><input id="savingsGoalName" placeholder="Подушка, машина, путешествие…"/></label>
+<label class="field"><span>Сумма цели (€)</span><input autocomplete="off" id="savingsGoalAmount" inputmode="decimal" placeholder="0,00" type="text"/></label>
+</div>
+<div class="sheet-actions"><button class="secondary-btn" id="clearSavingsGoalBtn" type="button">Убрать цель</button><button class="primary-btn" type="submit">Сохранить</button></div>
+</form>
+</div>
+</dialog>
 
-          <div class="content-column">
-            <div class="section-header">
-              <div>
-                <span class="micro-label">Приоритет</span>
-                <h2>Долги</h2>
-              </div>
-              <button class="text-btn" type="button" data-go="debts">Открыть план</button>
-            </div>
-            <div class="surface focus-surface" id="debtFocus"></div>
-          </div>
-        </section>
-
-        <section class="section-grid planning-dashboard-grid">
-          <div class="content-column">
-            <div class="section-header">
-              <div>
-                <span class="micro-label">Обязательства</span>
-                <h2>Ближайшие платежи</h2>
-              </div>
-              <button class="text-btn" type="button" data-go="plans">Открыть план</button>
-            </div>
-            <div class="surface planning-focus" id="scheduledFocus"></div>
-          </div>
-
-          <div class="content-column">
-            <div class="section-header">
-              <div>
-                <span class="micro-label">К получению</span>
-                <h2>Мне должны</h2>
-              </div>
-              <button class="text-btn" type="button" data-go="plans">Все записи</button>
-            </div>
-            <div class="surface planning-focus" id="receivableFocus"></div>
-          </div>
-        </section>
-
-        <section class="section-grid">
-          <div class="content-column">
-            <div class="section-header">
-              <div>
-                <span class="micro-label">Бюджет</span>
-                <h2>Расходы месяца</h2>
-              </div>
-              <span class="section-hint" id="budgetMonthHint">этот месяц</span>
-            </div>
-            <div class="surface budget-surface" id="budgetPanel"></div>
-          </div>
-
-          <div class="content-column">
-            <div class="section-header">
-              <div>
-                <span class="micro-label">Категории</span>
-                <h2>Куда уходят деньги</h2>
-              </div>
-            </div>
-            <div class="surface category-surface"><div id="categoryChart"></div></div>
-          </div>
-        </section>
-      </section>
-
-      <section id="transactions" class="page hidden">
-        <div class="page-heading">
-          <div>
-            <span class="micro-label">История</span>
-            <h2>Операции</h2>
-            <p>Доходы, расходы и платежи по долгам в одном месте.</p>
-          </div>
-          <div class="heading-actions">
-            <button class="secondary-btn ai-entry-btn" type="button" data-go="import">
-              <span class="ai-spark">✦</span><span>Импорт</span>
-            </button>
-            <button class="primary-btn" type="button" id="addTxBtn">+ Добавить</button>
-          </div>
-        </div>
-
-        <div class="toolbar-card">
-          <label class="search-box" for="txSearch">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="11" cy="11" r="7"/><path d="m20 20-4.1-4.1" stroke-linecap="round"/></svg>
-            <input id="txSearch" type="search" placeholder="Поиск по категории или заметке" />
-          </label>
-          <div class="filter-row" role="group" aria-label="Фильтр операций">
-            <button class="filter-chip active" type="button" data-filter="all">Все</button>
-            <button class="filter-chip" type="button" data-filter="income">Доход</button>
-            <button class="filter-chip" type="button" data-filter="expense">Расход</button>
-            <button class="filter-chip" type="button" data-filter="debt">Долги</button>
-            <button class="filter-chip" type="button" data-filter="transfer">Переводы</button>
-          </div>
-        </div>
-
-        <div class="surface list-surface"><div id="txList" class="transaction-list"></div></div>
-      </section>
-
-      <section id="import" class="page hidden">
-        <div class="page-heading import-heading">
-          <div>
-            <span class="micro-label">AI Import</span>
-            <h2>Импорт выписки</h2>
-            <p>Два пути: загрузи CSV из банка для AI-разбора или готовый Finance Control JSON, который уже содержит категории и импортируется без API.</p>
-          </div>
-          <button class="secondary-btn" type="button" data-go="transactions">← Операции</button>
-        </div>
-
-        <div class="ai-privacy-note">
-          <span class="privacy-shield">✓</span>
-          <div><strong>Приватность по умолчанию</strong><p>CSV перед AI очищается от IBAN, длинных номеров карт и похожих идентификаторов. Готовый JSON разбирается полностью на устройстве и вообще не отправляется в OpenAI.</p></div>
-        </div>
-
-        <section class="import-grid">
-          <article class="import-card import-source-card">
-            <div class="import-card-head">
-              <div><span class="step-number">1</span><span class="micro-label">Источник</span><h3>Банковская выписка</h3></div>
-              <span class="connection-pill" id="aiConnectionBadge"><span></span>Не проверено</span>
-            </div>
-
-            <label class="drop-zone" id="bankDropZone" for="bankFile">
-              <input id="bankFile" type="file" accept=".csv,.txt,text/csv,text/plain" />
-              <span class="drop-icon">↥</span>
-              <strong id="bankFileLabel">Выбрать CSV</strong>
-              <span>Поддерживаются CSV/TXT до 10 МБ · данные сначала читаются локально</span>
-            </label>
-
-            <div id="fileSummary" class="file-summary hidden"></div>
-
-            <div id="mappingPanel" class="mapping-panel hidden">
-              <div class="mapping-intro"><strong>Проверь колонки</strong><span>Мы постарались определить их автоматически.</span></div>
-              <div class="form-grid mapping-grid">
-                <label class="field"><span>Дата</span><select id="mapDate"></select></label>
-                <label class="field"><span>Описание</span><select id="mapDescription"></select></label>
-                <label class="field"><span>Сумма</span><select id="mapAmount"></select><small>Используй, если расходы отрицательные, а поступления положительные.</small></label>
-                <label class="field"><span>Расход отдельно</span><select id="mapDebit"></select><small>Необязательно, если есть одна колонка «Сумма».</small></label>
-                <label class="field"><span>Доход отдельно</span><select id="mapCredit"></select><small>Необязательно, если есть одна колонка «Сумма».</small></label>
-              </div>
-              <div class="sheet-actions import-actions"><button class="primary-btn" type="button" id="prepareImportBtn">Подготовить операции</button></div>
-            </div>
-          </article>
-
-          <article class="import-card ai-connect-card">
-            <div class="import-card-head">
-              <div><span class="step-number">2</span><span class="micro-label">Supabase</span><h3>Подключение AI</h3></div>
-            </div>
-            <p class="import-copy">OpenAI API key хранится только в Supabase Edge Function. В браузере сохраняются URL функции и твой личный access token.</p>
-            <div class="connect-preview">
-              <div><span>Browser</span><strong>Finance Control</strong></div><i>→</i><div><span>Supabase</span><strong>Edge Function</strong></div><i>→</i><div><span>OpenAI</span><strong>GPT classifier</strong></div>
-            </div>
-            <button class="secondary-btn full-btn" type="button" id="openAiSettingsBtn">Настроить подключение</button>
-          </article>
-
-          <article class="import-card prepared-file-card">
-            <div class="prepared-file-copy">
-              <div class="import-card-head">
-                <div><span class="step-number">БЕЗ API</span><span class="micro-label">Готовые данные</span><h3>Finance Control JSON</h3></div>
-                <span class="connection-pill ok"><span></span>Локально</span>
-              </div>
-              <p class="import-copy">Если выписку уже разобрал ChatGPT, загрузи подготовленный JSON. Категории, типы и продавцы уже будут внутри — останется только проверить и подтвердить импорт.</p>
-              <button class="secondary-btn template-btn" type="button" id="downloadPreparedTemplateBtn">Скачать шаблон JSON</button>
-            </div>
-            <div class="prepared-file-upload">
-              <label class="drop-zone compact-drop" id="preparedDropZone" for="preparedFile">
-                <input id="preparedFile" type="file" accept="application/json,.json" />
-                <span class="drop-icon">✓</span>
-                <strong id="preparedFileLabel">Выбрать готовый JSON</strong>
-                <span>Формат Finance Control Prepared Import v1 · файл читается только на устройстве</span>
-              </label>
-              <div id="preparedFileSummary" class="file-summary prepared-file-summary hidden"></div>
-            </div>
-          </article>
-        </section>
-
-        <section id="preparedSection" class="prepared-section hidden">
-          <div class="section-header prepared-header">
-            <div><span class="micro-label">Готово к анализу</span><h2>Операции из файла</h2></div>
-            <div class="prepared-actions"><button class="secondary-btn" type="button" id="resetImportBtn">Другой файл</button><button class="primary-btn" type="button" id="analyzeAiBtn"><span class="ai-spark">✦</span> Разобрать с AI</button></div>
-          </div>
-          <div class="import-stats" id="importStats"></div>
-          <div class="import-balance-note"><strong>Текущий баланс останется прежним.</strong><span>История добавится в аналитику, а стартовый баланс автоматически скорректируется на чистый поток импортированных операций.</span></div>
-          <div class="analysis-progress hidden" id="analysisProgress"><div class="analysis-progress-top"><span id="analysisProgressText">AI анализирует…</span><strong id="analysisProgressPct">0%</strong></div><div class="progress"><span id="analysisProgressBar" style="width:0%"></span></div></div>
-          <div class="surface raw-preview-surface"><div id="rawPreview" class="raw-preview"></div></div>
-        </section>
-
-        <section id="reviewSection" class="review-section hidden">
-          <div class="section-header review-header">
-            <div><span class="micro-label">Проверка</span><h2>Перед импортом</h2></div>
-            <span class="review-count" id="reviewCount"></span>
-          </div>
-          <div class="review-toolbar">
-            <label class="search-box" for="reviewSearch"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="11" cy="11" r="7"/><path d="m20 20-4.1-4.1" stroke-linecap="round"/></svg><input id="reviewSearch" type="search" placeholder="Поиск по операции или категории" /></label>
-            <div class="filter-row review-filters"><button class="filter-chip active" type="button" data-review-filter="all">Все</button><button class="filter-chip" type="button" data-review-filter="review">Нужно проверить</button><button class="filter-chip" type="button" data-review-filter="expense">Расходы</button><button class="filter-chip" type="button" data-review-filter="income">Доходы</button></div>
-          </div>
-          <div id="reviewList" class="review-list"></div>
-          <div class="import-final-bar"><div><span id="selectedImportSummary">0 выбрано</span><small id="duplicateSummary">Дубликаты будут пропущены автоматически</small></div><button class="primary-btn" type="button" id="commitImportBtn">Импортировать</button></div>
-        </section>
-      </section>
-
-      <section id="debts" class="page hidden">
-        <div class="page-heading">
-          <div>
-            <span class="micro-label">Debt planner</span>
-            <h2>Долги</h2>
-            <p>Приоритеты, прогноз закрытия и сравнение стратегий.</p>
-          </div>
-          <button class="primary-btn" type="button" id="addDebtBtn">+ Добавить долг</button>
-        </div>
-
-        <section class="debt-overview-grid">
-          <article class="overview-card">
-            <span>Остаток</span>
-            <strong id="debtTotalSummary">€0</strong>
-            <small id="debtCountSummary">0 активных</small>
-          </article>
-          <article class="overview-card">
-            <span>Минимумы / мес.</span>
-            <strong id="minPaymentsSummary">€0</strong>
-            <small id="debtBudgetSummary">бюджет не задан</small>
-          </article>
-          <article class="overview-card">
-            <span>Прогноз</span>
-            <strong id="payoffSummary">—</strong>
-            <small id="payoffDateSummary">нужны данные</small>
-          </article>
-          <article class="overview-card">
-            <span>Расчётные проценты</span>
-            <strong id="interestSummary">—</strong>
-            <small>по текущему плану</small>
-          </article>
-        </section>
-
-        <section class="section-block">
-          <div class="section-header">
-            <div>
-              <span class="micro-label">Активные долги</span>
-              <h2>Порядок погашения</h2>
-            </div>
-            <span class="section-hint" id="strategyCaption">avalanche</span>
-          </div>
-          <div id="debtList" class="debt-card-grid"></div>
-        </section>
-
-        <section class="section-grid section-grid-main">
-          <div class="content-column">
-            <div class="section-header">
-              <div>
-                <span class="micro-label">План</span>
-                <h2>Прогноз погашения</h2>
-              </div>
-            </div>
-            <div class="surface plan-surface" id="planPanel"></div>
-          </div>
-
-          <div class="content-column">
-            <div class="section-header">
-              <div>
-                <span class="micro-label">Сравнение</span>
-                <h2>Avalanche vs Snowball</h2>
-              </div>
-            </div>
-            <div class="surface compare-surface" id="strategyCompare"></div>
-          </div>
-        </section>
-      </section>
-
-      <section id="plans" class="page hidden">
-        <div class="page-heading plan-page-heading">
-          <div>
-            <span class="micro-label">Money planner</span>
-            <h2>План</h2>
-            <p>Что обязательно оплатить и какие деньги должны вернуться к тебе.</p>
-          </div>
-          <div class="heading-actions">
-            <button class="secondary-btn" type="button" id="addReceivableBtn">+ Мне должны</button>
-            <button class="primary-btn" type="button" id="addScheduledBtn">+ Платёж</button>
-          </div>
-        </div>
-
-        <section class="debt-overview-grid plan-overview-grid">
-          <article class="overview-card">
-            <span>К оплате</span>
-            <strong id="scheduledTotalSummary">€0</strong>
-            <small id="scheduledCountSummary">0 платежей</small>
-          </article>
-          <article class="overview-card">
-            <span>До конца месяца</span>
-            <strong id="scheduledMonthSummary">€0</strong>
-            <small id="scheduledNextSummary">ничего не запланировано</small>
-          </article>
-          <article class="overview-card">
-            <span>Мне должны</span>
-            <strong id="receivableTotalSummary">€0</strong>
-            <small id="receivableCountSummary">0 записей</small>
-          </article>
-          <article class="overview-card">
-            <span>Просрочено к получению</span>
-            <strong id="receivableOverdueSummary">€0</strong>
-            <small id="receivableOverdueCount">всё вовремя</small>
-          </article>
-        </section>
-
-        <section class="section-block">
-          <div class="section-header">
-            <div>
-              <span class="micro-label">Обязательные платежи</span>
-              <h2>Запланировано</h2>
-            </div>
-            <span class="section-hint">галочка = оплачено</span>
-          </div>
-          <div class="surface plan-list-surface" id="scheduledList"></div>
-        </section>
-
-        <section class="section-block">
-          <div class="section-header">
-            <div>
-              <span class="micro-label">К получению</span>
-              <h2>Мне должны</h2>
-            </div>
-            <span class="section-hint">галочка = вернули</span>
-          </div>
-          <div class="surface plan-list-surface" id="receivableList"></div>
-        </section>
-      </section>
-
-      <section id="settings" class="page hidden">
-        <div class="page-heading">
-          <div>
-            <span class="micro-label">Параметры</span>
-            <h2>Настройки</h2>
-            <p>Все финансовые данные остаются только в этом браузере.</p>
-          </div>
-        </div>
-
-        <div class="settings-grid">
-          <section class="settings-card">
-            <div class="settings-head">
-              <div>
-                <span class="micro-label">База</span>
-                <h3>Основные числа</h3>
-              </div>
-            </div>
-            <form id="settingsForm">
-              <div class="form-grid">
-                <label class="field"><span>Стартовый баланс (€)</span><input id="startBalance" inputmode="decimal" type="text" autocomplete="off" placeholder="0,00" /><small>Доступные деньги на момент начала учёта. Переводы в «Отложено» уменьшают доступный баланс, но не считаются расходом.</small></label>
-                <label class="field"><span>Лимит обычных расходов / месяц (€)</span><input id="spendBudget" inputmode="decimal" type="text" autocomplete="off" placeholder="0,00" /><small>Платежи по долгам в этот лимит не входят.</small></label>
-                <label class="field"><span>Бюджет на долги / месяц (€)</span><input id="debtBudget" inputmode="decimal" type="text" autocomplete="off" placeholder="0,00" /><small>Сумма, которую реально готов направлять на все долги ежемесячно.</small></label>
-                <label class="field"><span>Стратегия погашения</span><select id="debtStrategy"><option value="avalanche">Avalanche — высокий % первым</option><option value="snowball">Snowball — маленький долг первым</option></select><small>Можно сменить в любой момент без изменения самих долгов.</small></label>
-                <label class="field"><span>День зарплаты</span><input id="salaryDay" inputmode="numeric" type="number" min="1" max="31" placeholder="например 25" /><small>Необязательно. Нужен только для ориентира до следующей зарплаты.</small></label>
-                <label class="field"><span>Неснижаемый резерв (€)</span><input id="reserveFloor" inputmode="decimal" type="text" autocomplete="off" placeholder="0,00" /><small>Сумма, ниже которой ты не хочешь опускать свободный баланс.</small></label>
-              </div>
-              <div class="form-actions"><button class="primary-btn" type="submit">Сохранить настройки</button></div>
-            </form>
-          </section>
-
-          <section class="settings-card">
-            <div class="settings-head"><div><span class="micro-label">Резервная копия</span><h3>Данные</h3></div></div>
-            <div class="data-actions">
-              <button class="secondary-btn" type="button" id="exportBtn">Экспорт JSON</button>
-              <button class="secondary-btn" type="button" id="importBtn">Импорт JSON</button>
-              <input id="importFile" class="file-input" type="file" accept="application/json,.json" />
-            </div>
-            <p class="settings-note">Экспортируй резервную копию перед очисткой Safari, сменой телефона или крупными изменениями.</p>
-          </section>
-
-          <section class="settings-card ai-settings-card" id="aiSettingsCard">
-            <div class="settings-head"><div><span class="micro-label">AI Import</span><h3>Supabase подключение</h3></div><span class="connection-pill compact" id="settingsConnectionBadge"><span></span>Не проверено</span></div>
-            <div class="ai-settings-fields">
-              <label class="field"><span>URL Edge Function</span><input id="aiFunctionUrl" type="url" inputmode="url" autocomplete="off" placeholder="https://PROJECT.supabase.co/functions/v1/classify-transactions" /><small>URL не является секретом.</small></label>
-              <label class="field"><span>Личный access token</span><input id="aiAccessToken" type="password" autocomplete="off" placeholder="Введи FINANCE_ACCESS_TOKEN" /><small>Хранится только локально на этом устройстве. Не попадает в JSON backup.</small></label>
-            </div>
-            <div class="data-actions"><button class="primary-btn" type="button" id="saveAiConfigBtn">Сохранить</button><button class="secondary-btn" type="button" id="testAiBtn">Проверить соединение</button></div>
-            <p class="settings-note">OpenAI API key сюда вводить не нужно — он должен быть секретом <strong>OPENAI_API_KEY</strong> внутри Supabase.</p>
-          </section>
-
-          <section class="settings-card">
-            <div class="settings-head"><div><span class="micro-label">Приватность</span><h3>Как хранятся данные</h3></div></div>
-            <p class="settings-note settings-note-first">Операции, долги и настройки записываются в localStorage текущего браузера. Только когда ты сам запускаешь AI-анализ, очищенные строки выбранных банковских операций отправляются через твою Supabase Edge Function в OpenAI.</p>
-            <div class="privacy-list">
-              <div><span class="status-dot"></span><span>Обычная работа приложения — полностью локальная</span></div>
-              <div><span class="status-dot"></span><span>Основные функции работают офлайн после первой загрузки</span></div>
-              <div><span class="status-dot"></span><span>Можно установить как PWA на iPhone</span></div>
-            </div>
-          </section>
-
-          <section class="settings-card danger-card">
-            <div class="settings-head"><div><span class="micro-label">Опасная зона</span><h3>Удалить данные</h3></div></div>
-            <button class="danger-btn" type="button" id="resetBtn">Удалить всё локально</button>
-            <p class="settings-note">Действие нельзя отменить. Лучше сначала сделать экспорт.</p>
-          </section>
-        </div>
-      </section>
-    </main>
-  </div>
-
-  <nav class="bottom-nav" aria-label="Навигация">
-    <button class="nav-item active" type="button" data-tab="dashboard" aria-label="Главная">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="m4 10 8-6 8 6v9a1 1 0 0 1-1 1h-5v-6h-4v6H5a1 1 0 0 1-1-1z" stroke-linejoin="round"/></svg><span>Главная</span>
-    </button>
-    <button class="nav-item" type="button" data-tab="transactions" aria-label="Операции">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M5 7h14M5 12h10M5 17h6" stroke-linecap="round"/></svg><span>Операции</span>
-    </button>
-    <button class="nav-item" type="button" data-tab="debts" aria-label="Долги">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="4" y="6" width="16" height="12" rx="2"/><path d="M8 10h5M17 10v4" stroke-linecap="round"/></svg><span>Долги</span>
-    </button>
-    <button class="nav-item" type="button" data-tab="plans" aria-label="План">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="4" y="5.5" width="16" height="14.5" rx="2"/><path d="M8 3.5v4M16 3.5v4M4 10h16M8 14h3M8 17h6" stroke-linecap="round"/></svg><span>План</span>
-    </button>
-  </nav>
-
-  <dialog id="txDialog">
-    <div class="sheet">
-      <div class="sheet-handle" aria-hidden="true"></div>
-      <div class="sheet-head">
-        <div><span class="micro-label">Операция</span><h2 id="txDialogTitle">Новая операция</h2><p>Сразу попадёт в баланс и месячную статистику.</p></div>
-        <button class="close-btn" type="button" data-close="txDialog" aria-label="Закрыть">×</button>
-      </div>
-      <form id="txForm">
-        <input id="txId" type="hidden" />
-        <div class="form-grid form-grid-modal">
-          <label class="field"><span>Тип</span><select id="txType"><option value="expense">Расход</option><option value="income">Доход</option></select></label>
-          <label class="field"><span>Сумма (€)</span><input id="txAmount" type="text" inputmode="decimal" autocomplete="off" placeholder="0,00" required /></label>
-          <label class="field"><span>Категория</span><input id="txCategory" list="categorySuggestions" placeholder="Еда, аренда, зарплата…" required /></label>
-          <label class="field"><span>Дата</span><input id="txDate" type="date" required /></label>
-          <label class="field field-full"><span>Комментарий</span><input id="txNote" placeholder="Необязательно" /></label>
-        </div>
-        <datalist id="categorySuggestions"><option value="Зарплата"><option value="Прочий доход"><option value="Еда"><option value="Рестораны"><option value="Аренда/Жильё"><option value="Коммунальные"><option value="Транспорт"><option value="Топливо"><option value="Авто"><option value="Покупки"><option value="Развлечения"><option value="Подписки"><option value="Здоровье"><option value="Спорт"><option value="Путешествия"><option value="Страхование"><option value="Налоги/Сборы"><option value="Наличные"><option value="Погашение долга"><option value="Возврат долга мне"><option value="Другое"></datalist>
-        <div class="sheet-actions"><button class="secondary-btn" type="button" data-close="txDialog">Отмена</button><button class="primary-btn" type="submit" id="txSubmit">Добавить</button></div>
-      </form>
-    </div>
-  </dialog>
-
-  <dialog id="debtDialog">
-    <div class="sheet">
-      <div class="sheet-handle" aria-hidden="true"></div>
-      <div class="sheet-head">
-        <div><span class="micro-label">Долг</span><h2 id="debtDialogTitle">Новый долг</h2><p>Остаток, ставка, минимум и дата следующего платежа.</p></div>
-        <button class="close-btn" type="button" data-close="debtDialog" aria-label="Закрыть">×</button>
-      </div>
-      <form id="debtForm">
-        <input id="debtId" type="hidden" />
-        <div class="form-grid form-grid-modal">
-          <label class="field"><span>Название</span><input id="debtName" placeholder="Карта, кредит, знакомый…" required /></label>
-          <label class="field"><span>Текущий остаток (€)</span><input id="debtBalance" type="text" inputmode="decimal" autocomplete="off" placeholder="0,00" required /></label>
-          <label class="field"><span>Процент годовых (%)</span><input id="debtApr" type="text" inputmode="decimal" autocomplete="off" value="0" /></label>
-          <label class="field"><span>Минимальный платёж (€)</span><input id="debtMin" type="text" inputmode="decimal" autocomplete="off" value="0" /></label>
-          <label class="field field-full"><span>Дата следующего платежа</span><input id="debtDue" type="date" /></label>
-        </div>
-        <div class="sheet-actions"><button class="secondary-btn" type="button" data-close="debtDialog">Отмена</button><button class="primary-btn" type="submit" id="debtSubmit">Добавить долг</button></div>
-      </form>
-    </div>
-  </dialog>
-
-  <dialog id="paymentDialog">
-    <div class="sheet">
-      <div class="sheet-handle" aria-hidden="true"></div>
-      <div class="sheet-head">
-        <div><span class="micro-label">Платёж</span><h2>Записать платёж</h2><p id="paymentSubtitle">Платёж уменьшит долг и добавится в расходы.</p></div>
-        <button class="close-btn" type="button" data-close="paymentDialog" aria-label="Закрыть">×</button>
-      </div>
-      <form id="paymentForm">
-        <input id="paymentDebtId" type="hidden" />
-        <div class="form-grid form-grid-modal">
-          <label class="field"><span>Сумма (€)</span><input id="paymentAmount" type="text" inputmode="decimal" autocomplete="off" placeholder="0,00" required /></label>
-          <label class="field"><span>Дата</span><input id="paymentDate" type="date" required /></label>
-          <label class="field field-full"><span>Комментарий</span><input id="paymentNote" placeholder="Например: минимальный платёж" /></label>
-        </div>
-        <div class="sheet-actions"><button class="secondary-btn" type="button" data-close="paymentDialog">Отмена</button><button class="primary-btn" type="submit">Записать платёж</button></div>
-      </form>
-    </div>
-  </dialog>
-
-  <dialog id="scheduledDialog">
-    <div class="sheet">
-      <div class="sheet-handle" aria-hidden="true"></div>
-      <div class="sheet-head">
-        <div><span class="micro-label">Обязательный платёж</span><h2 id="scheduledDialogTitle">Новый платёж</h2><p>До оплаты сумма резервируется в плане. Галочка «Оплачено» автоматически создаст расход.</p></div>
-        <button class="close-btn" type="button" data-close="scheduledDialog" aria-label="Закрыть">×</button>
-      </div>
-      <form id="scheduledForm">
-        <input id="scheduledId" type="hidden" />
-        <div class="form-grid form-grid-modal">
-          <label class="field"><span>Название</span><input id="scheduledName" placeholder="Аренда, страховка, счёт…" required /></label>
-          <label class="field"><span>Сумма (€)</span><input id="scheduledAmount" type="text" inputmode="decimal" autocomplete="off" placeholder="0,00" required /></label>
-          <label class="field"><span>Оплатить до</span><input id="scheduledDue" type="date" required /></label>
-          <label class="field"><span>Категория</span><input id="scheduledCategory" list="categorySuggestions" placeholder="Аренда/Жильё" required /></label>
-          <label class="field field-full"><span>Комментарий</span><input id="scheduledNote" placeholder="Необязательно" /></label>
-        </div>
-        <div class="sheet-actions"><button class="secondary-btn" type="button" data-close="scheduledDialog">Отмена</button><button class="primary-btn" type="submit" id="scheduledSubmit">Добавить платёж</button></div>
-      </form>
-    </div>
-  </dialog>
-
-  <dialog id="receivableDialog">
-    <div class="sheet">
-      <div class="sheet-handle" aria-hidden="true"></div>
-      <div class="sheet-head">
-        <div><span class="micro-label">Мне должны</span><h2 id="receivableDialogTitle">Новая запись</h2><p>Деньги не попадут в доступный баланс, пока ты не отметишь, что их вернули.</p></div>
-        <button class="close-btn" type="button" data-close="receivableDialog" aria-label="Закрыть">×</button>
-      </div>
-      <form id="receivableForm">
-        <input id="receivableId" type="hidden" />
-        <div class="form-grid form-grid-modal">
-          <label class="field"><span>Кто должен</span><input id="receivablePerson" placeholder="Имя или компания" required /></label>
-          <label class="field"><span>Сумма (€)</span><input id="receivableAmount" type="text" inputmode="decimal" autocomplete="off" placeholder="0,00" required /></label>
-          <label class="field"><span>Вернуть до</span><input id="receivableDue" type="date" /></label>
-          <label class="field field-full"><span>Комментарий</span><input id="receivableNote" placeholder="За что или при каких условиях" /></label>
-        </div>
-        <div class="sheet-actions"><button class="secondary-btn" type="button" data-close="receivableDialog">Отмена</button><button class="primary-btn" type="submit" id="receivableSubmit">Добавить запись</button></div>
-      </form>
-    </div>
-  </dialog>
-
-  <dialog id="savingsTransferDialog">
-    <div class="sheet">
-      <div class="sheet-handle" aria-hidden="true"></div>
-      <div class="sheet-head">
-        <div><span class="micro-label">Денежный карман</span><h2 id="savingsTransferTitle">Отложить деньги</h2><p id="savingsTransferSubtitle">Сумма уйдёт из доступных, но не будет считаться расходом.</p></div>
-        <button class="close-btn" type="button" data-close="savingsTransferDialog" aria-label="Закрыть">×</button>
-      </div>
-      <form id="savingsTransferForm">
-        <input id="savingsTransferDirection" type="hidden" value="to_savings" />
-        <div class="form-grid form-grid-modal">
-          <label class="field"><span>Сумма (€)</span><input id="savingsTransferAmount" type="text" inputmode="decimal" autocomplete="off" placeholder="0,00" required /></label>
-          <label class="field"><span>Дата</span><input id="savingsTransferDate" type="date" required /></label>
-          <label class="field field-full"><span>Комментарий</span><input id="savingsTransferNote" placeholder="Например: финансовая подушка" /></label>
-        </div>
-        <div class="sheet-actions"><button class="secondary-btn" type="button" data-close="savingsTransferDialog">Отмена</button><button class="primary-btn" type="submit" id="savingsTransferSubmit">Отложить</button></div>
-      </form>
-    </div>
-  </dialog>
-
-  <dialog id="savingsGoalDialog">
-    <div class="sheet">
-      <div class="sheet-handle" aria-hidden="true"></div>
-      <div class="sheet-head">
-        <div><span class="micro-label">Цель накопления</span><h2>Цель для отложенных</h2><p>Не влияет на баланс — только показывает прогресс.</p></div>
-        <button class="close-btn" type="button" data-close="savingsGoalDialog" aria-label="Закрыть">×</button>
-      </div>
-      <form id="savingsGoalForm">
-        <div class="form-grid form-grid-modal">
-          <label class="field"><span>Название цели</span><input id="savingsGoalName" placeholder="Подушка, машина, путешествие…" /></label>
-          <label class="field"><span>Сумма цели (€)</span><input id="savingsGoalAmount" type="text" inputmode="decimal" autocomplete="off" placeholder="0,00" /></label>
-        </div>
-        <div class="sheet-actions"><button class="secondary-btn" type="button" id="clearSavingsGoalBtn">Убрать цель</button><button class="primary-btn" type="submit">Сохранить</button></div>
-      </form>
-    </div>
-  </dialog>
-
-  <div class="toast" id="toast" role="status" aria-live="polite"></div>
-  <script src="app-v4.4.js" defer></script>
-  <script src="ai-import-v4.4.js" defer></script>
+<dialog id="txDetailDialog"><div class="sheet compact-sheet"><div class="sheet-handle"></div><div class="sheet-head"><div><span class="micro-label">Операция</span><h2 id="txDetailTitle">Детали</h2><p id="txDetailSubtitle"></p></div><button aria-label="Закрыть" class="close-btn" data-close="txDetailDialog" type="button">×</button></div><div class="tx-detail-card" id="txDetailBody"></div><div class="sheet-actions tx-detail-actions"><button class="secondary-btn" id="txDetailReceivable" type="button">Мне должны эти деньги</button><button class="secondary-btn" id="txDetailEdit" type="button">Изменить</button><button class="danger-btn compact-danger" id="txDetailDelete" type="button">Удалить</button></div></div></dialog>
+<dialog id="txFilterDialog"><div class="sheet compact-sheet"><div class="sheet-handle"></div><div class="sheet-head"><div><span class="micro-label">История</span><h2>Фильтр операций</h2><p>Покажи только нужный тип движения денег.</p></div><button class="close-btn" data-close="txFilterDialog" type="button">×</button></div><div class="filter-choice-list"><button data-choose-filter="all" type="button">Все операции</button><button data-choose-filter="expense" type="button">Расходы</button><button data-choose-filter="income" type="button">Доходы</button><button data-choose-filter="debt" type="button">Платежи по долгам</button><button data-choose-filter="transfer" type="button">Переводы и отложенные</button><button data-choose-filter="receivable" type="button">Дал / вернули долг</button></div></div></dialog>
+<div aria-live="polite" class="toast" id="toast" role="status"></div>
+<script defer="" src="app-v5.js"></script>
+<script defer="" src="ai-import-v5.js"></script>
 </body>
 </html>
