@@ -10,8 +10,8 @@
   <meta name="apple-mobile-web-app-title" content="Finance Control" />
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="apple-touch-icon" href="apple-touch-icon.png" />
-  <link rel="stylesheet" href="styles-v4.3.css" />
-  <link rel="stylesheet" href="ai-import-v4.3.css" />
+  <link rel="stylesheet" href="styles-v4.4.css" />
+  <link rel="stylesheet" href="ai-import-v4.4.css" />
   <title>Finance Control</title>
 </head>
 <body>
@@ -32,34 +32,67 @@
 
     <main>
       <section id="dashboard" class="page">
-        <article class="hero-card">
-          <div class="hero-topline">
-            <span class="hero-label">Доступно сейчас</span>
-            <button class="ghost-icon" type="button" id="toggleBalance" aria-label="Скрыть или показать баланс">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M2.5 12s3.6-6 9.5-6 9.5 6 9.5 6-3.6 6-9.5 6-9.5-6-9.5-6Z"/><circle cx="12" cy="12" r="2.4"/></svg>
-            </button>
-          </div>
-          <div class="hero-balance" id="availableMetric">€0</div>
-          <div class="hero-meta-row">
-            <span class="trend-chip" id="cashflowDelta">Поток €0</span>
-            <span class="hero-caption" id="monthCaption">Этот месяц</span>
-          </div>
+        <div class="wallet-carousel-shell">
+          <div class="wallet-carousel" id="walletCarousel" aria-label="Денежные карманы">
+            <article class="hero-card wallet-slide" data-wallet-slide="available">
+              <div class="hero-topline">
+                <span class="hero-label">Доступно сейчас</span>
+                <button class="ghost-icon" type="button" data-toggle-balance aria-label="Скрыть или показать баланс">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M2.5 12s3.6-6 9.5-6 9.5 6 9.5 6-3.6 6-9.5 6-9.5-6-9.5-6Z"/><circle cx="12" cy="12" r="2.4"/></svg>
+                </button>
+              </div>
+              <div class="hero-balance" id="availableMetric">€0</div>
+              <div class="hero-meta-row">
+                <span class="trend-chip" id="cashflowDelta">Поток €0</span>
+                <span class="hero-caption" id="monthCaption">Этот месяц</span>
+              </div>
+              <div class="hero-actions">
+                <button class="hero-action hero-action-primary" id="quickIncome" type="button">
+                  <span class="action-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 19V5M6.5 10.5 12 5l5.5 5.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span>Доход</span>
+                </button>
+                <button class="hero-action" id="quickExpense" type="button">
+                  <span class="action-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 5v14m5.5-5.5L12 19l-5.5-5.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span>Расход</span>
+                </button>
+                <button class="hero-action" id="quickDebt" type="button">
+                  <span class="action-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 5v14M5 12h14" stroke-linecap="round"/></svg></span><span>Долг</span>
+                </button>
+              </div>
+            </article>
 
-          <div class="hero-actions">
-            <button class="hero-action hero-action-primary" id="quickIncome" type="button">
-              <span class="action-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 19V5M6.5 10.5 12 5l5.5 5.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-              <span>Доход</span>
-            </button>
-            <button class="hero-action" id="quickExpense" type="button">
-              <span class="action-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 5v14m5.5-5.5L12 19l-5.5-5.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-              <span>Расход</span>
-            </button>
-            <button class="hero-action" id="quickDebt" type="button">
-              <span class="action-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 5v14M5 12h14" stroke-linecap="round"/></svg></span>
-              <span>Долг</span>
-            </button>
+            <article class="hero-card wallet-slide savings-card" data-wallet-slide="savings">
+              <div class="hero-topline">
+                <div class="savings-label-wrap"><span class="hero-label">Отложено</span><span class="savings-lock" aria-hidden="true">резерв</span></div>
+                <button class="ghost-icon" type="button" data-toggle-balance aria-label="Скрыть или показать отложенные деньги">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M2.5 12s3.6-6 9.5-6 9.5 6 9.5 6-3.6 6-9.5 6-9.5-6-9.5-6Z"/><circle cx="12" cy="12" r="2.4"/></svg>
+                </button>
+              </div>
+              <div class="hero-balance" id="savingsMetric">€0</div>
+              <div class="hero-meta-row">
+                <span class="trend-chip" id="savingsMonthDelta">Ничего не отложено</span>
+                <span class="hero-caption" id="savingsShare">0% всех денег</span>
+              </div>
+              <div class="savings-goal-strip" id="savingsGoalStrip">
+                <div class="savings-goal-copy"><span id="savingsGoalLabel">Цель не задана</span><strong id="savingsGoalValue">Добавить цель</strong></div>
+                <div class="savings-goal-track" aria-hidden="true"><span id="savingsGoalProgress"></span></div>
+              </div>
+              <div class="hero-actions savings-actions">
+                <button class="hero-action hero-action-primary" id="saveMoneyBtn" type="button">
+                  <span class="action-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 4v12m-5-5 5 5 5-5M5 20h14" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span>Отложить</span>
+                </button>
+                <button class="hero-action" id="returnMoneyBtn" type="button">
+                  <span class="action-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 20V8m-5 5 5-5 5 5M5 4h14" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span>Вернуть</span>
+                </button>
+                <button class="hero-action" id="savingsGoalBtn" type="button">
+                  <span class="action-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2"/><path d="M12 3V1M21 12h2" stroke-linecap="round"/></svg></span><span>Цель</span>
+                </button>
+              </div>
+            </article>
           </div>
-        </article>
+          <div class="wallet-dots" role="tablist" aria-label="Выбор денежного кармана">
+            <button type="button" class="wallet-dot active" data-wallet-dot="0" aria-label="Доступные деньги" aria-selected="true"></button>
+            <button type="button" class="wallet-dot" data-wallet-dot="1" aria-label="Отложенные деньги" aria-selected="false"></button>
+          </div>
+        </div>
 
         <div class="setup-banner hidden" id="setupBanner">
           <div>
@@ -190,6 +223,7 @@
             <button class="filter-chip" type="button" data-filter="income">Доход</button>
             <button class="filter-chip" type="button" data-filter="expense">Расход</button>
             <button class="filter-chip" type="button" data-filter="debt">Долги</button>
+            <button class="filter-chip" type="button" data-filter="transfer">Переводы</button>
           </div>
         </div>
 
@@ -442,7 +476,7 @@
             </div>
             <form id="settingsForm">
               <div class="form-grid">
-                <label class="field"><span>Стартовый баланс (€)</span><input id="startBalance" inputmode="decimal" type="text" autocomplete="off" placeholder="0,00" /><small>Баланс на момент начала учёта. Все операции прибавляются к нему или вычитаются.</small></label>
+                <label class="field"><span>Стартовый баланс (€)</span><input id="startBalance" inputmode="decimal" type="text" autocomplete="off" placeholder="0,00" /><small>Доступные деньги на момент начала учёта. Переводы в «Отложено» уменьшают доступный баланс, но не считаются расходом.</small></label>
                 <label class="field"><span>Лимит обычных расходов / месяц (€)</span><input id="spendBudget" inputmode="decimal" type="text" autocomplete="off" placeholder="0,00" /><small>Платежи по долгам в этот лимит не входят.</small></label>
                 <label class="field"><span>Бюджет на долги / месяц (€)</span><input id="debtBudget" inputmode="decimal" type="text" autocomplete="off" placeholder="0,00" /><small>Сумма, которую реально готов направлять на все долги ежемесячно.</small></label>
                 <label class="field"><span>Стратегия погашения</span><select id="debtStrategy"><option value="avalanche">Avalanche — высокий % первым</option><option value="snowball">Snowball — маленький долг первым</option></select><small>Можно сменить в любой момент без изменения самих долгов.</small></label>
@@ -611,8 +645,44 @@
     </div>
   </dialog>
 
+  <dialog id="savingsTransferDialog">
+    <div class="sheet">
+      <div class="sheet-handle" aria-hidden="true"></div>
+      <div class="sheet-head">
+        <div><span class="micro-label">Денежный карман</span><h2 id="savingsTransferTitle">Отложить деньги</h2><p id="savingsTransferSubtitle">Сумма уйдёт из доступных, но не будет считаться расходом.</p></div>
+        <button class="close-btn" type="button" data-close="savingsTransferDialog" aria-label="Закрыть">×</button>
+      </div>
+      <form id="savingsTransferForm">
+        <input id="savingsTransferDirection" type="hidden" value="to_savings" />
+        <div class="form-grid form-grid-modal">
+          <label class="field"><span>Сумма (€)</span><input id="savingsTransferAmount" type="text" inputmode="decimal" autocomplete="off" placeholder="0,00" required /></label>
+          <label class="field"><span>Дата</span><input id="savingsTransferDate" type="date" required /></label>
+          <label class="field field-full"><span>Комментарий</span><input id="savingsTransferNote" placeholder="Например: финансовая подушка" /></label>
+        </div>
+        <div class="sheet-actions"><button class="secondary-btn" type="button" data-close="savingsTransferDialog">Отмена</button><button class="primary-btn" type="submit" id="savingsTransferSubmit">Отложить</button></div>
+      </form>
+    </div>
+  </dialog>
+
+  <dialog id="savingsGoalDialog">
+    <div class="sheet">
+      <div class="sheet-handle" aria-hidden="true"></div>
+      <div class="sheet-head">
+        <div><span class="micro-label">Цель накопления</span><h2>Цель для отложенных</h2><p>Не влияет на баланс — только показывает прогресс.</p></div>
+        <button class="close-btn" type="button" data-close="savingsGoalDialog" aria-label="Закрыть">×</button>
+      </div>
+      <form id="savingsGoalForm">
+        <div class="form-grid form-grid-modal">
+          <label class="field"><span>Название цели</span><input id="savingsGoalName" placeholder="Подушка, машина, путешествие…" /></label>
+          <label class="field"><span>Сумма цели (€)</span><input id="savingsGoalAmount" type="text" inputmode="decimal" autocomplete="off" placeholder="0,00" /></label>
+        </div>
+        <div class="sheet-actions"><button class="secondary-btn" type="button" id="clearSavingsGoalBtn">Убрать цель</button><button class="primary-btn" type="submit">Сохранить</button></div>
+      </form>
+    </div>
+  </dialog>
+
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
-  <script src="app-v4.3.js" defer></script>
-  <script src="ai-import-v4.3.js" defer></script>
+  <script src="app-v4.4.js" defer></script>
+  <script src="ai-import-v4.4.js" defer></script>
 </body>
 </html>
