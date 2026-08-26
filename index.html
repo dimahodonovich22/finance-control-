@@ -11,7 +11,7 @@
 <meta content="Finance Control" name="apple-mobile-web-app-title"/>
 <link href="manifest.webmanifest" rel="manifest"/>
 <link href="apple-touch-icon.png" rel="apple-touch-icon"/>
-<link href="styles-v5.css" rel="stylesheet"/>
+<link href="styles-v5-1.css" rel="stylesheet"/>
 <link href="ai-import-v5.css" rel="stylesheet"/>
 <title>Finance Control</title>
 </head>
@@ -58,9 +58,9 @@
 </button>
 </div>
 </article>
-<article class="hero-card wallet-slide savings-card" data-wallet-slide="savings">
+<article class="hero-card wallet-slide savings-card" data-wallet-slide="savings" id="savingsCard">
 <div class="hero-topline">
-<div class="savings-label-wrap"><span class="hero-label">Отложено</span><span aria-hidden="true" class="savings-lock">резерв</span></div>
+<div class="savings-label-wrap"><span class="hero-label">Отложено</span><button class="savings-lock savings-history-link" id="savingsHistoryBtn" type="button">история →</button></div>
 <button aria-label="Скрыть или показать отложенные деньги" class="ghost-icon" data-toggle-balance="" type="button">
 <svg fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M2.5 12s3.6-6 9.5-6 9.5 6 9.5 6-3.6 6-9.5 6-9.5-6-9.5-6Z"></path><circle cx="12" cy="12" r="2.4"></circle></svg>
 </button>
@@ -70,10 +70,10 @@
 <span class="trend-chip" id="savingsMonthDelta">Ничего не отложено</span>
 <span class="hero-caption" id="savingsShare">0% всех денег</span>
 </div>
-<div class="savings-goal-strip" id="savingsGoalStrip">
+<button class="savings-goal-strip savings-goal-button" id="savingsGoalStrip" type="button">
 <div class="savings-goal-copy"><span id="savingsGoalLabel">Цель не задана</span><strong id="savingsGoalValue">Добавить цель</strong></div>
 <div aria-hidden="true" class="savings-goal-track"><span id="savingsGoalProgress"></span></div>
-</div>
+</button>
 <div class="hero-actions savings-actions">
 <button class="hero-action hero-action-primary" id="saveMoneyBtn" type="button">
 <span class="action-icon"><svg fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M12 4v12m-5-5 5 5 5-5M5 20h14" stroke-linecap="round" stroke-linejoin="round"></path></svg></span><span>Отложить</span>
@@ -81,8 +81,8 @@
 <button class="hero-action" id="returnMoneyBtn" type="button">
 <span class="action-icon"><svg fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M12 20V8m-5 5 5-5 5 5M5 4h14" stroke-linecap="round" stroke-linejoin="round"></path></svg></span><span>Вернуть</span>
 </button>
-<button class="hero-action" id="savingsGoalBtn" type="button">
-<span class="action-icon"><svg fill="none" stroke="currentColor" viewbox="0 0 24 24"><circle cx="12" cy="12" r="7"></circle><circle cx="12" cy="12" r="2"></circle><path d="M12 3V1M21 12h2" stroke-linecap="round"></path></svg></span><span>Цель</span>
+<button class="hero-action" id="spendSavingsBtn" type="button">
+<span class="action-icon"><svg fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M6 7h12M8 7V5h8v2M8 10v7m4-7v7m4-7v7M7 7l1 12h8l1-12" stroke-linecap="round" stroke-linejoin="round"></path></svg></span><span>Потратить</span>
 </button>
 </div>
 </article>
@@ -457,6 +457,31 @@
 </form>
 </div>
 </dialog>
+<dialog id="savingsWalletDialog">
+<div class="sheet savings-wallet-sheet">
+<div aria-hidden="true" class="sheet-handle"></div>
+<div class="sheet-head">
+<div><span class="micro-label">Отложенные деньги</span><h2>Карман «Отложено»</h2><p>История всех перемещений. Эти деньги не входят в «Доступно сейчас».</p></div>
+<button aria-label="Закрыть" class="close-btn" data-close="savingsWalletDialog" type="button">×</button>
+</div>
+<section class="savings-wallet-overview">
+<div><span>Сейчас отложено</span><strong id="savingsWalletBalance">€0</strong><small id="savingsWalletShare">0% всех денег</small></div>
+<div class="savings-wallet-month-grid">
+<div><span>Отложил</span><b id="savingsAddedMonth">€0</b></div>
+<div><span>Вернул</span><b id="savingsReturnedMonth">€0</b></div>
+<div><span>Потратил</span><b id="savingsSpentMonth">€0</b></div>
+</div>
+</section>
+<div class="savings-wallet-actions">
+<button class="primary-btn" data-savings-wallet-action="to_savings" type="button">Отложить</button>
+<button class="secondary-btn" data-savings-wallet-action="from_savings" type="button">Вернуть</button>
+<button class="secondary-btn" data-savings-wallet-action="spend_savings" type="button">Потратить</button>
+</div>
+<button class="savings-wallet-goal" id="savingsWalletGoalBtn" type="button"><span><small>Цель накопления</small><strong id="savingsWalletGoalName">Не задана</strong></span><b id="savingsWalletGoalValue">Добавить →</b></button>
+<div class="savings-ledger-head"><div><span class="micro-label">Журнал</span><h3>История отложенных</h3></div><span id="savingsLedgerCount">0 движений</span></div>
+<div class="savings-ledger-list" id="savingsLedgerList"></div>
+</div>
+</dialog>
 <dialog id="savingsTransferDialog">
 <div class="sheet">
 <div aria-hidden="true" class="sheet-handle"></div>
@@ -466,9 +491,11 @@
 </div>
 <form id="savingsTransferForm">
 <input id="savingsTransferDirection" type="hidden" value="to_savings"/>
+<input id="savingsEditId" type="hidden" value=""/>
 <div class="form-grid form-grid-modal">
 <label class="field"><span>Сумма (€)</span><input autocomplete="off" id="savingsTransferAmount" inputmode="decimal" placeholder="0,00" required="" type="text"/></label>
 <label class="field"><span>Дата</span><input id="savingsTransferDate" required="" type="date"/></label>
+<label class="field hidden" id="savingsSpendCategoryField"><span>Категория расхода</span><input id="savingsSpendCategory" list="categorySuggestions" placeholder="Путешествия, Авто, Покупки…"/></label>
 <label class="field field-full"><span>Комментарий</span><input id="savingsTransferNote" placeholder="Например: финансовая подушка"/></label>
 </div>
 <div class="sheet-actions"><button class="secondary-btn" data-close="savingsTransferDialog" type="button">Отмена</button><button class="primary-btn" id="savingsTransferSubmit" type="submit">Отложить</button></div>
@@ -495,7 +522,7 @@
 <dialog id="txDetailDialog"><div class="sheet compact-sheet"><div class="sheet-handle"></div><div class="sheet-head"><div><span class="micro-label">Операция</span><h2 id="txDetailTitle">Детали</h2><p id="txDetailSubtitle"></p></div><button aria-label="Закрыть" class="close-btn" data-close="txDetailDialog" type="button">×</button></div><div class="tx-detail-card" id="txDetailBody"></div><div class="sheet-actions tx-detail-actions"><button class="secondary-btn" id="txDetailReceivable" type="button">Мне должны эти деньги</button><button class="secondary-btn" id="txDetailEdit" type="button">Изменить</button><button class="danger-btn compact-danger" id="txDetailDelete" type="button">Удалить</button></div></div></dialog>
 <dialog id="txFilterDialog"><div class="sheet compact-sheet"><div class="sheet-handle"></div><div class="sheet-head"><div><span class="micro-label">История</span><h2>Фильтр операций</h2><p>Покажи только нужный тип движения денег.</p></div><button class="close-btn" data-close="txFilterDialog" type="button">×</button></div><div class="filter-choice-list"><button data-choose-filter="all" type="button">Все операции</button><button data-choose-filter="expense" type="button">Расходы</button><button data-choose-filter="income" type="button">Доходы</button><button data-choose-filter="debt" type="button">Платежи по долгам</button><button data-choose-filter="transfer" type="button">Переводы и отложенные</button><button data-choose-filter="receivable" type="button">Дал / вернули долг</button></div></div></dialog>
 <div aria-live="polite" class="toast" id="toast" role="status"></div>
-<script defer="" src="app-v5.js"></script>
+<script defer="" src="app-v5-1.js"></script>
 <script defer="" src="ai-import-v5.js"></script>
 </body>
 </html>
