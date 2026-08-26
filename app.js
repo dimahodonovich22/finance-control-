@@ -1,8 +1,8 @@
 (()=>{
   'use strict';
 
-  const STORAGE_KEY='finance-control-v4';
-  const PREVIOUS_KEYS=['finance-control-v3','finance-control-v2','finance-control-v1'];
+  const STORAGE_KEY='finance-control-v5';
+  const PREVIOUS_KEYS=['finance-control-v4','finance-control-v3','finance-control-v2','finance-control-v1'];
   const $=id=>document.getElementById(id);
   const qsa=sel=>Array.from(document.querySelectorAll(sel));
   const uid=()=>globalThis.crypto?.randomUUID?.()||`id-${Date.now()}-${Math.random().toString(16).slice(2)}`;
@@ -34,7 +34,7 @@
 
   function defaultState(){
     return{
-      version:4,
+      version:5,
       settings:{
         startBalance:0,
         spendBudget:0,
@@ -44,7 +44,9 @@
         reserveFloor:0
       },
       transactions:[],
-      debts:[]
+      debts:[],
+      scheduledPayments:[],
+      receivables:[]
     };
   }
 
@@ -60,7 +62,7 @@
 
     out.transactions=(Array.isArray(raw?.transactions)?raw.transactions:[]).map(t=>{
       const type=t.type==='income'?'income':'expense';
-      const allowedKinds=['income','expense','transfer','refund','debt_payment'];
+      const allowedKinds=['income','expense','transfer','refund','debt_payment','receivable_return'];
       const fallbackKind=t.category==='Погашение долга'?'debt_payment':type;
       return{
         id:String(t.id||uid()),
@@ -73,6 +75,9 @@
         merchant:String(t.merchant||'').slice(0,100),
         externalId:String(t.externalId||'').slice(0,180),
         importedByAI:Boolean(t.importedByAI),
+        origin:['scheduled_payment','receivable'].includes(t.origin)?t.origin:'',
+        originId:String(t.originId||'').slice(0,100),
+        bankReconciled:Boolean(t.bankReconciled),
         createdAt:Number(t.createdAt)||0
       };
     }).filter(t=>t.amount>0);
@@ -90,6 +95,31 @@
         due:/^\d{4}-\d{2}-\d{2}$/.test(d.due||'')?d.due:''
       };
     }).filter(d=>d.balance>0.005);
+
+    out.scheduledPayments=(Array.isArray(raw?.scheduledPayments)?raw.scheduledPayments:[]).map(x=>({
+      id:String(x.id||uid()),
+      name:String(x.name||'Платёж').slice(0,90),
+      amount:Math.max(0,Number(x.amount)||0),
+      due:/^\d{4}-\d{2}-\d{2}$/.test(x.due||'')?x.due:today(),
+      category:String(x.category||'Другое').slice(0,80),
+      note:String(x.note||'').slice(0,180),
+      paid:Boolean(x.paid),
+      paidAt:/^\d{4}-\d{2}-\d{2}$/.test(x.paidAt||'')?x.paidAt:'',
+      transactionId:String(x.transactionId||''),
+      createdAt:Number(x.createdAt)||0
+    })).filter(x=>x.amount>0);
+
+    out.receivables=(Array.isArray(raw?.receivables)?raw.receivables:[]).map(x=>({
+      id:String(x.id||uid()),
+      person:String(x.person||'Мне должны').slice(0,90),
+      amount:Math.max(0,Number(x.amount)||0),
+      due:/^\d{4}-\d{2}-\d{2}$/.test(x.due||'')?x.due:'',
+      note:String(x.note||'').slice(0,180),
+      settled:Boolean(x.settled),
+      settledAt:/^\d{4}-\d{2}-\d{2}$/.test(x.settledAt||'')?x.settledAt:'',
+      transactionId:String(x.transactionId||''),
+      createdAt:Number(x.createdAt)||0
+    })).filter(x=>x.amount>0);
     return out;
   }
 
@@ -129,7 +159,7 @@
   }
 
   function monthStats(){
-    let income=0,lifestyleExpense=0,debtPayments=0,refunds=0,transfers=0,allExpense=0,allDelta=0;
+    let income=0,lifestyleExpense=0,debtPayments=0,refunds=0,receivableReturns=0,transfers=0,allExpense=0,allDelta=0;
     for(const t of state.transactions){
       const kind=t.kind||(t.category==='Погашение долга'?'debt_payment':t.type);
       if(kind!=='transfer')allDelta+=t.type==='income'?t.amount:-t.amount;
@@ -141,6 +171,10 @@
         else lifestyleExpense+=t.amount;
         continue;
       }
+      if(kind==='receivable_return'){
+        receivableReturns+=t.amount;
+        continue;
+      }
       if(kind==='debt_payment'||t.category==='Погашение долга'){
         debtPayments+=t.amount;
         allExpense+=t.amount;
@@ -150,7 +184,7 @@
       else{allExpense+=t.amount;lifestyleExpense+=t.amount}
     }
     lifestyleExpense=Math.max(0,lifestyleExpense);
-    return{income,lifestyleExpense,debtPayments,refunds,transfers,allExpense,cashflow:income+refunds-allExpense,allDelta};
+    return{income,lifestyleExpense,debtPayments,refunds,receivableReturns,transfers,allExpense,cashflow:income+refunds+receivableReturns-allExpense,allDelta};
   }
 
   function totals(){
@@ -259,9 +293,41 @@
     return{kind:'later',text:fmtDate(d.due)};
   }
 
+  function planningStats(){
+    const activePayments=state.scheduledPayments.filter(x=>!x.paid);
+    const activeReceivables=state.receivables.filter(x=>!x.settled);
+    const currentMonth=monthKey();
+    const scheduledTotal=activePayments.reduce((s,x)=>s+x.amount,0);
+    const scheduledMonth=activePayments.filter(x=>x.due.slice(0,7)===currentMonth).reduce((s,x)=>s+x.amount,0);
+    const receivableTotal=activeReceivables.reduce((s,x)=>s+x.amount,0);
+    const now=parseDateOnly(today());
+    const overdue=activeReceivables.filter(x=>x.due&&parseDateOnly(x.due)<now);
+    const receivableOverdue=overdue.reduce((s,x)=>s+x.amount,0);
+    const nextPayment=activePayments.slice().sort((a,b)=>a.due.localeCompare(b.due)||(a.createdAt-b.createdAt))[0]||null;
+    const nextReceivable=activeReceivables.slice().sort((a,b)=>(a.due||'9999').localeCompare(b.due||'9999')||(a.createdAt-b.createdAt))[0]||null;
+    return{activePayments,activeReceivables,scheduledTotal,scheduledMonth,receivableTotal,receivableOverdue,overdue,nextPayment,nextReceivable};
+  }
+
+  function daysDiffFromToday(date){
+    const d=parseDateOnly(date);
+    const t=parseDateOnly(today());
+    return d&&t?daysBetween(t,d):null;
+  }
+
+  function planDueLabel(date,done=false,doneAt=''){
+    if(done)return doneAt?`Оплачено ${fmtDate(doneAt)}`:'Оплачено';
+    if(!date)return'Без срока';
+    const diff=daysDiffFromToday(date);
+    if(diff<0)return`Просрочено на ${Math.abs(diff)} дн.`;
+    if(diff===0)return'Сегодня';
+    if(diff===1)return'Завтра';
+    if(diff<=7)return`Через ${diff} дн.`;
+    return fmtDate(date);
+  }
+
   function txIconLabel(category,type){
     if(type==='income')return'↗';
-    const map={'Еда':'ЕД','Аренда':'ДМ','Транспорт':'ТР','Покупки':'ПК','Развлечения':'РЗ','Подписки':'ПД','Здоровье':'ЗД','Путешествия':'ПТ','Погашение долга':'ДЛ'};
+    const map={'Еда':'ЕД','Аренда':'ДМ','Транспорт':'ТР','Покупки':'ПК','Развлечения':'РЗ','Подписки':'ПД','Здоровье':'ЗД','Путешествия':'ПТ','Погашение долга':'ДЛ','Возврат долга мне':'↙'};
     return map[category]||String(category||'Р').trim().slice(0,2).toUpperCase()||'Р';
   }
 
@@ -306,19 +372,21 @@
     $('debtSub').textContent=state.debts.length?`${state.debts.length} активн. · мин. ${money(t.minPayments)}/мес.`:'нет долгов';
 
     const budget=state.settings.spendBudget;
-    const budgetLeft=Math.max(0,budget-t.lifestyleExpense);
+    const planning=planningStats();
+    const budgetLeft=Math.max(0,budget-t.lifestyleExpense-planning.scheduledMonth);
     const safeDaily=budget>0?budgetLeft/daysLeftInMonth():null;
     $('safeDailyMetric').textContent=safeDaily===null?'—':money(safeDaily);
     const salary=salaryCountdown();
-    $('safeDailySub').textContent=salary?`до зарплаты ${salary.days} дн.`:(budget>0?`${daysLeftInMonth()} дн. до конца месяца`:'задай лимит расходов');
+    $('safeDailySub').textContent=budget>0&&planning.scheduledMonth>0?`после планов ${money(planning.scheduledMonth)}`:(salary?`до зарплаты ${salary.days} дн.`:(budget>0?`${daysLeftInMonth()} дн. до конца месяца`:'задай лимит расходов'));
 
-    const needsSetup=state.settings.startBalance===0&&state.settings.spendBudget===0&&state.settings.debtBudget===0&&!state.transactions.length&&!state.debts.length;
+    const needsSetup=state.settings.startBalance===0&&state.settings.spendBudget===0&&state.settings.debtBudget===0&&!state.transactions.length&&!state.debts.length&&!state.scheduledPayments.length&&!state.receivables.length;
     $('setupBanner').classList.toggle('hidden',!needsSetup);
 
     const recent=sortedTransactions().slice(0,5);
     $('recentList').innerHTML=recent.length?recent.map(t=>txRow(t,{compact:true})).join(''):`<div class="empty-state"><strong>Операций пока нет</strong>Добавь первый доход или расход — баланс начнёт считаться автоматически.</div>`;
 
     renderDebtFocus();
+    renderPlanningFocus();
     renderBudgetPanel();
     renderCategoryChart();
   }
@@ -347,6 +415,28 @@
       <button class="primary-btn focus-cta" type="button" data-pay-debt="${esc(d.id)}">Записать платёж</button>`;
   }
 
+  function renderPlanningFocus(){
+    const p=planningStats();
+    const pay=$('scheduledFocus');
+    const rec=$('receivableFocus');
+    if(pay){
+      if(!p.activePayments.length){
+        pay.innerHTML=`<div class="empty-state"><strong>Платежей нет</strong>Добавь аренду, страховку или другой обязательный платёж.<br><button class="secondary-btn" type="button" data-new-scheduled>Добавить платёж</button></div>`;
+      }else{
+        const x=p.nextPayment;
+        pay.innerHTML=`<div class="planning-focus-top"><div><span>Следующий платёж</span><strong>${esc(x.name)}</strong></div><b>${money2(x.amount)}</b></div><div class="planning-focus-meta"><span>${esc(planDueLabel(x.due))}</span><span>${esc(x.category)}</span></div><div class="planning-total-line"><span>Всего ожидает оплаты</span><strong>${money2(p.scheduledTotal)}</strong></div>`;
+      }
+    }
+    if(rec){
+      if(!p.activeReceivables.length){
+        rec.innerHTML=`<div class="empty-state"><strong>Никто ничего не должен</strong>Добавь запись, если дал деньги или ждёшь возврат.<br><button class="secondary-btn" type="button" data-new-receivable>Добавить запись</button></div>`;
+      }else{
+        const x=p.nextReceivable;
+        rec.innerHTML=`<div class="planning-focus-top"><div><span>Ближайший возврат</span><strong>${esc(x.person)}</strong></div><b>${money2(x.amount)}</b></div><div class="planning-focus-meta"><span>${esc(x.due?planDueLabel(x.due):'Срок не задан')}</span><span>${p.overdue.length?`${p.overdue.length} просроч.`:'без просрочек'}</span></div><div class="planning-total-line"><span>Всего должны</span><strong>${money2(p.receivableTotal)}</strong></div>`;
+      }
+    }
+  }
+
   function renderBudgetPanel(){
     const el=$('budgetPanel');
     const t=totals();
@@ -356,17 +446,19 @@
       return;
     }
     const spent=t.lifestyleExpense;
-    const left=budget-spent;
-    const pct=clamp(spent/budget*100,0,100);
+    const planned=planningStats().scheduledMonth;
+    const committed=spent+planned;
+    const left=budget-committed;
+    const pct=clamp(committed/budget*100,0,100);
     const reserve=Math.max(0,Number(state.settings.reserveFloor)||0);
     const freeAboveReserve=t.available-reserve;
     el.innerHTML=`
       <div class="budget-top">
-        <div><div class="budget-number">${money(spent)}</div><div class="budget-caption">потрачено из ${money(budget)}</div></div>
+        <div><div class="budget-number">${money(spent)}</div><div class="budget-caption">потрачено${planned>0?` + ${money(planned)} запланировано`:''} из ${money(budget)}</div></div>
         <div class="budget-right"><strong>${left>=0?money(left):`−${money(Math.abs(left))}`}</strong><span>${left>=0?'осталось':'перерасход'}</span></div>
       </div>
       <div class="progress"><span style="width:${pct.toFixed(1)}%"></span></div>
-      <div class="budget-foot"><span>${pct.toFixed(0)}% лимита</span><span>${money(Math.max(0,left)/daysLeftInMonth())} / день</span></div>
+      <div class="budget-foot"><span>${pct.toFixed(0)}% лимита с планами</span><span>${money(Math.max(0,left)/daysLeftInMonth())} / день</span></div>
       ${reserve>0&&freeAboveReserve<0?`<div class="warning-inline">Свободный баланс уже на ${money(Math.abs(freeAboveReserve))} ниже твоего неснижаемого резерва ${money(reserve)}.</div>`:''}`;
   }
 
@@ -466,6 +558,55 @@
     el.innerHTML=`<div class="compare-grid">${card('Avalanche',avalanche,'avalanche')}${card('Snowball',snowball,'snowball')}</div><div class="strategy-savings">${insight}</div>`;
   }
 
+  function sortedScheduled(){
+    return state.scheduledPayments.slice().sort((a,b)=>Number(a.paid)-Number(b.paid)||a.due.localeCompare(b.due)||(a.createdAt-b.createdAt));
+  }
+
+  function sortedReceivables(){
+    return state.receivables.slice().sort((a,b)=>Number(a.settled)-Number(b.settled)||(a.due||'9999').localeCompare(b.due||'9999')||(a.createdAt-b.createdAt));
+  }
+
+  function scheduledRow(x){
+    const late=!x.paid&&daysDiffFromToday(x.due)<0;
+    return `<div class="plan-money-row ${x.paid?'done':''} ${late?'late':''}">
+      <label class="plan-check" aria-label="${x.paid?'Снять отметку оплачено':'Отметить оплачено'}">
+        <input type="checkbox" data-toggle-scheduled="${esc(x.id)}" ${x.paid?'checked':''} />
+        <span aria-hidden="true">✓</span>
+      </label>
+      <div class="plan-money-main"><strong>${esc(x.name)}</strong><span>${esc(planDueLabel(x.due,x.paid,x.paidAt))} · ${esc(x.category)}${x.note?` · ${esc(x.note)}`:''}</span></div>
+      <div class="plan-money-side"><b>${money2(x.amount)}</b><div class="row-mini-actions"><button type="button" data-edit-scheduled="${esc(x.id)}">Изменить</button><button type="button" class="danger-text" data-del-scheduled="${esc(x.id)}">Удалить</button></div></div>
+    </div>`;
+  }
+
+  function receivableRow(x){
+    const late=!x.settled&&x.due&&daysDiffFromToday(x.due)<0;
+    return `<div class="plan-money-row ${x.settled?'done':''} ${late?'late':''}">
+      <label class="plan-check" aria-label="${x.settled?'Снять отметку вернули':'Отметить, что вернули'}">
+        <input type="checkbox" data-toggle-receivable="${esc(x.id)}" ${x.settled?'checked':''} />
+        <span aria-hidden="true">✓</span>
+      </label>
+      <div class="plan-money-main"><strong>${esc(x.person)}</strong><span>${esc(x.settled?(x.settledAt?`Вернули ${fmtDate(x.settledAt)}`:'Вернули'):(x.due?planDueLabel(x.due):'Срок не задан'))}${x.note?` · ${esc(x.note)}`:''}</span></div>
+      <div class="plan-money-side"><b>${money2(x.amount)}</b><div class="row-mini-actions"><button type="button" data-edit-receivable="${esc(x.id)}">Изменить</button><button type="button" class="danger-text" data-del-receivable="${esc(x.id)}">Удалить</button></div></div>
+    </div>`;
+  }
+
+  function renderPlans(){
+    const p=planningStats();
+    $('scheduledTotalSummary').textContent=money2(p.scheduledTotal);
+    $('scheduledCountSummary').textContent=p.activePayments.length?`${p.activePayments.length} ждут оплаты`:'ничего не ожидает';
+    $('scheduledMonthSummary').textContent=money2(p.scheduledMonth);
+    $('scheduledNextSummary').textContent=p.nextPayment?`${p.nextPayment.name} · ${planDueLabel(p.nextPayment.due)}`:'ничего не запланировано';
+    $('receivableTotalSummary').textContent=money2(p.receivableTotal);
+    $('receivableCountSummary').textContent=p.activeReceivables.length?`${p.activeReceivables.length} активн.`:'никто не должен';
+    $('receivableOverdueSummary').textContent=money2(p.receivableOverdue);
+    $('receivableOverdueCount').textContent=p.overdue.length?`${p.overdue.length} просрочено`:'всё вовремя';
+
+    const payments=sortedScheduled();
+    $('scheduledList').innerHTML=payments.length?payments.map(scheduledRow).join(''):`<div class="empty-state"><strong>Нет обязательных платежей</strong>Добавь следующий платёж — приложение зарезервирует его в месячном плане.<br><button class="secondary-btn" type="button" data-new-scheduled>Добавить платёж</button></div>`;
+    const receivables=sortedReceivables();
+    $('receivableList').innerHTML=receivables.length?receivables.map(receivableRow).join(''):`<div class="empty-state"><strong>Список пуст</strong>Добавь человека или компанию, которые должны вернуть тебе деньги.<br><button class="secondary-btn" type="button" data-new-receivable>Добавить запись</button></div>`;
+  }
+
   function renderSettings(){
     const s=state.settings;
     $('startBalance').value=s.startBalance||'';
@@ -480,6 +621,7 @@
     renderDashboard();
     renderTransactions();
     renderDebts();
+    renderPlans();
     renderSettings();
   }
 
@@ -616,7 +758,141 @@
     persist(closed?'Долг закрыт 🎉':'Платёж записан');
   });
 
+  function prepScheduled(x=null){
+    $('scheduledForm').reset();
+    $('scheduledId').value=x?.id||'';
+    $('scheduledName').value=x?.name||'';
+    $('scheduledAmount').value=x?.amount||'';
+    $('scheduledDue').value=x?.due||today();
+    $('scheduledCategory').value=x?.category||'';
+    $('scheduledNote').value=x?.note||'';
+    $('scheduledDialogTitle').textContent=x?'Изменить платёж':'Новый платёж';
+    $('scheduledSubmit').textContent=x?'Сохранить':'Добавить платёж';
+    openDialog('scheduledDialog');
+    setTimeout(()=>$('scheduledName').focus(),80);
+  }
+
+  function prepReceivable(x=null){
+    $('receivableForm').reset();
+    $('receivableId').value=x?.id||'';
+    $('receivablePerson').value=x?.person||'';
+    $('receivableAmount').value=x?.amount||'';
+    $('receivableDue').value=x?.due||'';
+    $('receivableNote').value=x?.note||'';
+    $('receivableDialogTitle').textContent=x?'Изменить запись':'Новая запись';
+    $('receivableSubmit').textContent=x?'Сохранить':'Добавить запись';
+    openDialog('receivableDialog');
+    setTimeout(()=>$('receivablePerson').focus(),80);
+  }
+
+  $('addScheduledBtn').addEventListener('click',()=>prepScheduled());
+  $('addReceivableBtn').addEventListener('click',()=>prepReceivable());
+
+  $('scheduledForm').addEventListener('submit',e=>{
+    e.preventDefault();
+    const amount=parseDecimalInput($('scheduledAmount').value);
+    if(!(amount>0))return showToast('Укажи сумму платежа');
+    const id=$('scheduledId').value||uid();
+    const existing=state.scheduledPayments.find(x=>x.id===id);
+    const item={
+      id,name:$('scheduledName').value.trim()||'Платёж',amount,
+      due:$('scheduledDue').value||today(),category:$('scheduledCategory').value.trim()||'Другое',
+      note:$('scheduledNote').value.trim(),paid:Boolean(existing?.paid),paidAt:existing?.paidAt||'',
+      transactionId:existing?.transactionId||'',createdAt:existing?.createdAt||Date.now()
+    };
+    const i=state.scheduledPayments.findIndex(x=>x.id===id);
+    if(i>=0)state.scheduledPayments[i]=item;else state.scheduledPayments.push(item);
+    if(item.paid&&item.transactionId){
+      const tx=state.transactions.find(t=>t.id===item.transactionId);
+      if(tx){tx.amount=item.amount;tx.category=item.category;tx.note=`Обязательный платёж: ${item.name}${item.note?` · ${item.note}`:''}`;tx.merchant=item.name}
+    }
+    closeDialog('scheduledDialog');
+    persist(i>=0?'Платёж обновлён':'Платёж запланирован');
+  });
+
+  $('receivableForm').addEventListener('submit',e=>{
+    e.preventDefault();
+    const amount=parseDecimalInput($('receivableAmount').value);
+    if(!(amount>0))return showToast('Укажи сумму');
+    const id=$('receivableId').value||uid();
+    const existing=state.receivables.find(x=>x.id===id);
+    const item={
+      id,person:$('receivablePerson').value.trim()||'Мне должны',amount,
+      due:$('receivableDue').value||'',note:$('receivableNote').value.trim(),
+      settled:Boolean(existing?.settled),settledAt:existing?.settledAt||'',transactionId:existing?.transactionId||'',
+      createdAt:existing?.createdAt||Date.now()
+    };
+    const i=state.receivables.findIndex(x=>x.id===id);
+    if(i>=0)state.receivables[i]=item;else state.receivables.push(item);
+    if(item.settled&&item.transactionId){
+      const tx=state.transactions.find(t=>t.id===item.transactionId);
+      if(tx){tx.amount=item.amount;tx.note=`Вернули долг: ${item.person}${item.note?` · ${item.note}`:''}`;tx.merchant=item.person}
+    }
+    closeDialog('receivableDialog');
+    persist(i>=0?'Запись обновлена':'Добавлено: мне должны');
+  });
+
+  function setScheduledPaid(x,paid){
+    x.paid=paid;
+    x.paidAt=paid?today():'';
+    if(paid){
+      if(!x.transactionId||!state.transactions.some(t=>t.id===x.transactionId)){
+        const transactionId=uid();
+        x.transactionId=transactionId;
+        state.transactions.push({
+          id:transactionId,type:'expense',kind:'expense',amount:x.amount,category:x.category,
+          date:today(),note:`Обязательный платёж: ${x.name}${x.note?` · ${x.note}`:''}`,
+          merchant:x.name,externalId:`planned-payment:${x.id}`,importedByAI:false,
+          origin:'scheduled_payment',originId:x.id,bankReconciled:false,createdAt:Date.now()
+        });
+      }
+    }else if(x.transactionId){
+      state.transactions=state.transactions.filter(t=>t.id!==x.transactionId);
+      x.transactionId='';
+    }
+  }
+
+  function setReceivableSettled(x,settled){
+    x.settled=settled;
+    x.settledAt=settled?today():'';
+    if(settled){
+      if(!x.transactionId||!state.transactions.some(t=>t.id===x.transactionId)){
+        const transactionId=uid();
+        x.transactionId=transactionId;
+        state.transactions.push({
+          id:transactionId,type:'income',kind:'receivable_return',amount:x.amount,category:'Возврат долга мне',
+          date:today(),note:`Вернули долг: ${x.person}${x.note?` · ${x.note}`:''}`,
+          merchant:x.person,externalId:`receivable-return:${x.id}`,importedByAI:false,
+          origin:'receivable',originId:x.id,bankReconciled:false,createdAt:Date.now()
+        });
+      }
+    }else if(x.transactionId){
+      state.transactions=state.transactions.filter(t=>t.id!==x.transactionId);
+      x.transactionId='';
+    }
+  }
+
+  document.body.addEventListener('change',e=>{
+    const scheduled=e.target.closest('[data-toggle-scheduled]');
+    if(scheduled){
+      const x=state.scheduledPayments.find(i=>i.id===scheduled.dataset.toggleScheduled);
+      if(x){setScheduledPaid(x,scheduled.checked);persist(scheduled.checked?'Платёж отмечен как оплаченный':'Платёж снова запланирован')}
+      return;
+    }
+    const receivable=e.target.closest('[data-toggle-receivable]');
+    if(receivable){
+      const x=state.receivables.find(i=>i.id===receivable.dataset.toggleReceivable);
+      if(x){setReceivableSettled(x,receivable.checked);persist(receivable.checked?'Отмечено: деньги вернули':'Возврат снова ожидается')}
+    }
+  });
+
   document.body.addEventListener('click',e=>{
+    const newScheduled=e.target.closest('[data-new-scheduled]');if(newScheduled){prepScheduled();return}
+    const newReceivable=e.target.closest('[data-new-receivable]');if(newReceivable){prepReceivable();return}
+    const editScheduled=e.target.closest('[data-edit-scheduled]');if(editScheduled){const x=state.scheduledPayments.find(i=>i.id===editScheduled.dataset.editScheduled);if(x)prepScheduled(x);return}
+    const delScheduled=e.target.closest('[data-del-scheduled]');if(delScheduled){const x=state.scheduledPayments.find(i=>i.id===delScheduled.dataset.delScheduled);if(x&&confirm(`Удалить запланированный платёж «${x.name}»?${x.transactionId?' Связанный расход тоже будет удалён.':''}`)){if(x.transactionId)state.transactions=state.transactions.filter(t=>t.id!==x.transactionId);state.scheduledPayments=state.scheduledPayments.filter(i=>i.id!==x.id);persist('Платёж удалён')}return}
+    const editReceivable=e.target.closest('[data-edit-receivable]');if(editReceivable){const x=state.receivables.find(i=>i.id===editReceivable.dataset.editReceivable);if(x)prepReceivable(x);return}
+    const delReceivable=e.target.closest('[data-del-receivable]');if(delReceivable){const x=state.receivables.find(i=>i.id===delReceivable.dataset.delReceivable);if(x&&confirm(`Удалить запись «${x.person}»?${x.transactionId?' Связанный возврат из операций тоже будет удалён.':''}`)){if(x.transactionId)state.transactions=state.transactions.filter(t=>t.id!==x.transactionId);state.receivables=state.receivables.filter(i=>i.id!==x.id);persist('Запись удалена')}return}
     const createDebt=e.target.closest('[data-create-debt]');if(createDebt){prepDebt();return}
     const editTx=e.target.closest('[data-edit-tx]');if(editTx){const t=state.transactions.find(x=>x.id===editTx.dataset.editTx);if(t)prepTransaction(t.type,t);return}
     const delTx=e.target.closest('[data-del-tx]');if(delTx){const t=state.transactions.find(x=>x.id===delTx.dataset.delTx);if(t&&confirm(`Удалить операцию «${t.category}» на ${money2(t.amount)}?`)){state.transactions=state.transactions.filter(x=>x.id!==t.id);persist('Операция удалена')}return}
@@ -656,7 +932,7 @@
     try{
       const raw=JSON.parse(await file.text());
       const imported=sanitizeState(raw);
-      if(!confirm(`Импортировать ${imported.transactions.length} операций и ${imported.debts.length} долгов? Текущие данные будут заменены.`))return;
+      if(!confirm(`Импортировать ${imported.transactions.length} операций, ${imported.debts.length} долгов, ${imported.scheduledPayments.length} платежей и ${imported.receivables.length} записей «мне должны»? Текущие данные будут заменены.`))return;
       state=imported;persist('Данные импортированы');
     }catch(error){showToast('Не удалось прочитать JSON-файл')}
     finally{$('importFile').value=''}
@@ -684,15 +960,30 @@
         if(!(amount>0))continue;
         if(externalId&&existingIds.has(externalId)){duplicates++;continue}
         const type=raw.type==='income'?'income':'expense';
-        const allowedKinds=['income','expense','transfer','refund','debt_payment'];
+        const allowedKinds=['income','expense','transfer','refund','debt_payment','receivable_return'];
         const kind=allowedKinds.includes(raw.kind)?raw.kind:type;
+        const normalizedDate=/^\d{4}-\d{2}-\d{2}$/.test(raw.date||'')?raw.date:today();
+        const rawCategory=String(raw.category||'Без категории').slice(0,80);
+        const reconcile=state.transactions.find(t=>
+          ['scheduled_payment','receivable'].includes(t.origin)&&!t.bankReconciled&&
+          Math.abs(t.amount-amount)<0.01&&Math.abs(daysBetween(parseDateOnly(t.date),parseDateOnly(normalizedDate)))<=3&&
+          t.type===type
+        );
+        if(reconcile){
+          reconcile.externalId=externalId||reconcile.externalId;
+          reconcile.merchant=String(raw.merchant||reconcile.merchant||'').slice(0,100);
+          reconcile.bankReconciled=true;
+          if(externalId)existingIds.add(externalId);
+          duplicates++;
+          continue;
+        }
         state.transactions.push({
           id:uid(),type,kind,amount,
-          category:String(raw.category||'Без категории').slice(0,80),
-          date:/^\d{4}-\d{2}-\d{2}$/.test(raw.date||'')?raw.date:today(),
+          category:rawCategory,
+          date:normalizedDate,
           note:String(raw.note||'').slice(0,180),
           merchant:String(raw.merchant||'').slice(0,100),
-          externalId,importedByAI:Boolean(raw.importedByAI),createdAt:Date.now()+added
+          externalId,importedByAI:Boolean(raw.importedByAI),origin:'',originId:'',bankReconciled:false,createdAt:Date.now()+added
         });
         if(kind!=='transfer')importedDelta+=type==='income'?amount:-amount;
         if(externalId)existingIds.add(externalId);

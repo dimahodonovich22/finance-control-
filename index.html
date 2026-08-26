@@ -117,6 +117,30 @@
           </div>
         </section>
 
+        <section class="section-grid planning-dashboard-grid">
+          <div class="content-column">
+            <div class="section-header">
+              <div>
+                <span class="micro-label">Обязательства</span>
+                <h2>Ближайшие платежи</h2>
+              </div>
+              <button class="text-btn" type="button" data-go="plans">Открыть план</button>
+            </div>
+            <div class="surface planning-focus" id="scheduledFocus"></div>
+          </div>
+
+          <div class="content-column">
+            <div class="section-header">
+              <div>
+                <span class="micro-label">К получению</span>
+                <h2>Мне должны</h2>
+              </div>
+              <button class="text-btn" type="button" data-go="plans">Все записи</button>
+            </div>
+            <div class="surface planning-focus" id="receivableFocus"></div>
+          </div>
+        </section>
+
         <section class="section-grid">
           <div class="content-column">
             <div class="section-header">
@@ -340,6 +364,65 @@
         </section>
       </section>
 
+      <section id="plans" class="page hidden">
+        <div class="page-heading plan-page-heading">
+          <div>
+            <span class="micro-label">Money planner</span>
+            <h2>План</h2>
+            <p>Что обязательно оплатить и какие деньги должны вернуться к тебе.</p>
+          </div>
+          <div class="heading-actions">
+            <button class="secondary-btn" type="button" id="addReceivableBtn">+ Мне должны</button>
+            <button class="primary-btn" type="button" id="addScheduledBtn">+ Платёж</button>
+          </div>
+        </div>
+
+        <section class="debt-overview-grid plan-overview-grid">
+          <article class="overview-card">
+            <span>К оплате</span>
+            <strong id="scheduledTotalSummary">€0</strong>
+            <small id="scheduledCountSummary">0 платежей</small>
+          </article>
+          <article class="overview-card">
+            <span>До конца месяца</span>
+            <strong id="scheduledMonthSummary">€0</strong>
+            <small id="scheduledNextSummary">ничего не запланировано</small>
+          </article>
+          <article class="overview-card">
+            <span>Мне должны</span>
+            <strong id="receivableTotalSummary">€0</strong>
+            <small id="receivableCountSummary">0 записей</small>
+          </article>
+          <article class="overview-card">
+            <span>Просрочено к получению</span>
+            <strong id="receivableOverdueSummary">€0</strong>
+            <small id="receivableOverdueCount">всё вовремя</small>
+          </article>
+        </section>
+
+        <section class="section-block">
+          <div class="section-header">
+            <div>
+              <span class="micro-label">Обязательные платежи</span>
+              <h2>Запланировано</h2>
+            </div>
+            <span class="section-hint">галочка = оплачено</span>
+          </div>
+          <div class="surface plan-list-surface" id="scheduledList"></div>
+        </section>
+
+        <section class="section-block">
+          <div class="section-header">
+            <div>
+              <span class="micro-label">К получению</span>
+              <h2>Мне должны</h2>
+            </div>
+            <span class="section-hint">галочка = вернули</span>
+          </div>
+          <div class="surface plan-list-surface" id="receivableList"></div>
+        </section>
+      </section>
+
       <section id="settings" class="page hidden">
         <div class="page-heading">
           <div>
@@ -420,6 +503,9 @@
     <button class="nav-item" type="button" data-tab="debts" aria-label="Долги">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="4" y="6" width="16" height="12" rx="2"/><path d="M8 10h5M17 10v4" stroke-linecap="round"/></svg><span>Долги</span>
     </button>
+    <button class="nav-item" type="button" data-tab="plans" aria-label="План">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="4" y="5.5" width="16" height="14.5" rx="2"/><path d="M8 3.5v4M16 3.5v4M4 10h16M8 14h3M8 17h6" stroke-linecap="round"/></svg><span>План</span>
+    </button>
     <button class="nav-item" type="button" data-tab="settings" aria-label="Настройки">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1.2l2-1.6-2-3.4-2.5 1a7 7 0 0 0-2.1-1.2L14 3h-4l-.4 2.6a7 7 0 0 0-2.1 1.2l-2.5-1-2 3.4 2 1.6A7 7 0 0 0 5 12c0 .4 0 .8.1 1.2l-2 1.6 2 3.4 2.5-1a7 7 0 0 0 2.1 1.2L10 21h4l.4-2.6a7 7 0 0 0 2.1-1.2l2.5 1 2-3.4-2-1.6c.1-.4.1-.8.1-1.2Z" stroke-linejoin="round"/></svg><span>Настройки</span>
     </button>
@@ -441,7 +527,7 @@
           <label class="field"><span>Дата</span><input id="txDate" type="date" required /></label>
           <label class="field field-full"><span>Комментарий</span><input id="txNote" placeholder="Необязательно" /></label>
         </div>
-        <datalist id="categorySuggestions"><option value="Зарплата"><option value="Прочий доход"><option value="Еда"><option value="Рестораны"><option value="Аренда/Жильё"><option value="Коммунальные"><option value="Транспорт"><option value="Топливо"><option value="Авто"><option value="Покупки"><option value="Развлечения"><option value="Подписки"><option value="Здоровье"><option value="Спорт"><option value="Путешествия"><option value="Страхование"><option value="Налоги/Сборы"><option value="Наличные"><option value="Погашение долга"><option value="Другое"></datalist>
+        <datalist id="categorySuggestions"><option value="Зарплата"><option value="Прочий доход"><option value="Еда"><option value="Рестораны"><option value="Аренда/Жильё"><option value="Коммунальные"><option value="Транспорт"><option value="Топливо"><option value="Авто"><option value="Покупки"><option value="Развлечения"><option value="Подписки"><option value="Здоровье"><option value="Спорт"><option value="Путешествия"><option value="Страхование"><option value="Налоги/Сборы"><option value="Наличные"><option value="Погашение долга"><option value="Возврат долга мне"><option value="Другое"></datalist>
         <div class="sheet-actions"><button class="secondary-btn" type="button" data-close="txDialog">Отмена</button><button class="primary-btn" type="submit" id="txSubmit">Добавить</button></div>
       </form>
     </div>
@@ -483,6 +569,47 @@
           <label class="field field-full"><span>Комментарий</span><input id="paymentNote" placeholder="Например: минимальный платёж" /></label>
         </div>
         <div class="sheet-actions"><button class="secondary-btn" type="button" data-close="paymentDialog">Отмена</button><button class="primary-btn" type="submit">Записать платёж</button></div>
+      </form>
+    </div>
+  </dialog>
+
+  <dialog id="scheduledDialog">
+    <div class="sheet">
+      <div class="sheet-handle" aria-hidden="true"></div>
+      <div class="sheet-head">
+        <div><span class="micro-label">Обязательный платёж</span><h2 id="scheduledDialogTitle">Новый платёж</h2><p>До оплаты сумма резервируется в плане. Галочка «Оплачено» автоматически создаст расход.</p></div>
+        <button class="close-btn" type="button" data-close="scheduledDialog" aria-label="Закрыть">×</button>
+      </div>
+      <form id="scheduledForm">
+        <input id="scheduledId" type="hidden" />
+        <div class="form-grid form-grid-modal">
+          <label class="field"><span>Название</span><input id="scheduledName" placeholder="Аренда, страховка, счёт…" required /></label>
+          <label class="field"><span>Сумма (€)</span><input id="scheduledAmount" type="text" inputmode="decimal" autocomplete="off" placeholder="0,00" required /></label>
+          <label class="field"><span>Оплатить до</span><input id="scheduledDue" type="date" required /></label>
+          <label class="field"><span>Категория</span><input id="scheduledCategory" list="categorySuggestions" placeholder="Аренда/Жильё" required /></label>
+          <label class="field field-full"><span>Комментарий</span><input id="scheduledNote" placeholder="Необязательно" /></label>
+        </div>
+        <div class="sheet-actions"><button class="secondary-btn" type="button" data-close="scheduledDialog">Отмена</button><button class="primary-btn" type="submit" id="scheduledSubmit">Добавить платёж</button></div>
+      </form>
+    </div>
+  </dialog>
+
+  <dialog id="receivableDialog">
+    <div class="sheet">
+      <div class="sheet-handle" aria-hidden="true"></div>
+      <div class="sheet-head">
+        <div><span class="micro-label">Мне должны</span><h2 id="receivableDialogTitle">Новая запись</h2><p>Деньги не попадут в доступный баланс, пока ты не отметишь, что их вернули.</p></div>
+        <button class="close-btn" type="button" data-close="receivableDialog" aria-label="Закрыть">×</button>
+      </div>
+      <form id="receivableForm">
+        <input id="receivableId" type="hidden" />
+        <div class="form-grid form-grid-modal">
+          <label class="field"><span>Кто должен</span><input id="receivablePerson" placeholder="Имя или компания" required /></label>
+          <label class="field"><span>Сумма (€)</span><input id="receivableAmount" type="text" inputmode="decimal" autocomplete="off" placeholder="0,00" required /></label>
+          <label class="field"><span>Вернуть до</span><input id="receivableDue" type="date" /></label>
+          <label class="field field-full"><span>Комментарий</span><input id="receivableNote" placeholder="За что или при каких условиях" /></label>
+        </div>
+        <div class="sheet-actions"><button class="secondary-btn" type="button" data-close="receivableDialog">Отмена</button><button class="primary-btn" type="submit" id="receivableSubmit">Добавить запись</button></div>
       </form>
     </div>
   </dialog>
