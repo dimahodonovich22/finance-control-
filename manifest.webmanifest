@@ -1,7 +1,7 @@
 {
   "name": "Finance Control",
   "short_name": "Finance",
-  "description": "Личный трекер финансов, долгов и AI-импорт банковских операций.",
+  "description": "Личный трекер финансов, долгов, AI-импорта и готовых банковских данных.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

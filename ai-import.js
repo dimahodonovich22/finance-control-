@@ -5,6 +5,8 @@
   const MAX_FILE_BYTES=10*1024*1024;
   const AI_BATCH_SIZE=55;
   const REVIEW_PAGE_SIZE=120;
+  const PREPARED_FORMAT='finance-control-prepared';
+  const PREPARED_VERSION=1;
   const CATEGORIES=['Зарплата','Прочий доход','Еда','Рестораны','Аренда/Жильё','Коммунальные','Транспорт','Топливо','Авто','Покупки','Развлечения','Подписки','Здоровье','Спорт','Путешествия','Страхование','Налоги/Сборы','Переводы','Возвраты','Погашение долга','Наличные','Другое'];
   const KINDS=[
     ['expense','Расход'],['income','Доход'],['transfer','Перевод между своими счетами'],['refund','Возврат'],['debt_payment','Погашение долга']
@@ -21,6 +23,7 @@
   let reviewFilter='all';
   let reviewVisible=REVIEW_PAGE_SIZE;
   let analyzing=false;
+  let importSource='bank';
 
   function loadConfig(){
     try{return JSON.parse(localStorage.getItem(CONFIG_KEY)||'{}')||{}}catch{return{}}
@@ -206,6 +209,90 @@
     const m=String(s||'').match(/^(\d{4})-(\d{2})-(\d{2})$/);return m?`${m[3]}.${m[2]}.${m[1]}`:s;
   }
 
+  function clamp01(value, fallback=1){
+    const n=Number(value);return Number.isFinite(n)?Math.max(0,Math.min(1,n)):fallback;
+  }
+  function preparedSignature(date,signed,description,merchant){
+    return `${date}|${Number(signed).toFixed(2)}|${String(merchant||description||'').toLowerCase().replace(/\s+/g,' ').trim()}|${String(description||'').toLowerCase().replace(/\s+/g,' ').trim()}`;
+  }
+  function normalizePreparedTransaction(raw,index,occurrence){
+    if(!raw||typeof raw!=='object')return{error:`Строка ${index+1}: не объект`};
+    const date=parseDate(raw.date);
+    const signed=typeof raw.amount==='number'?raw.amount:parseMoney(raw.amount);
+    const description=String(raw.description??raw.note??raw.merchant??'').trim();
+    const merchant=String(raw.merchant??description).trim().slice(0,100);
+    if(!date)return{error:`Строка ${index+1}: некорректная дата`};
+    if(!Number.isFinite(signed)||Math.abs(signed)<0.005)return{error:`Строка ${index+1}: некорректная сумма`};
+    if(!description&&!merchant)return{error:`Строка ${index+1}: нет описания`};
+    const allowedKinds=new Set(KINDS.map(x=>x[0]));
+    let kind=allowedKinds.has(raw.kind)?raw.kind:(signed>0?'income':'expense');
+    let category=CATEGORIES.includes(raw.category)?raw.category:(kind==='income'?'Прочий доход':'Другое');
+    if(kind==='transfer')category='Переводы';
+    if(kind==='refund')category='Возвраты';
+    if(kind==='debt_payment')category='Погашение долга';
+    if(kind==='income'&&category==='Другое')category='Прочий доход';
+    const signature=preparedSignature(date,signed,description,merchant);
+    const count=(occurrence.get(signature)||0)+1;occurrence.set(signature,count);
+    const suppliedExternal=String(raw.external_id??raw.externalId??'').trim().slice(0,180);
+    const externalId=suppliedExternal||`prepared:${hashText(`${signature}|${count}`)}`;
+    const confidence=clamp01(raw.confidence,1);
+    const needsReview=Boolean(raw.needs_review??raw.needsReview)||!allowedKinds.has(raw.kind??kind)||!CATEGORIES.includes(raw.category??category);
+    return{
+      id:String(raw.id||`p${index+1}-${hashText(signature)}`).slice(0,120),rowIndex:index,date,
+      description:description||merchant,redactedDescription:redactSensitive(description||merchant),
+      signedAmount:signed,amount:Math.abs(signed),externalId,kind,category,merchant:merchant||description,
+      confidence,needsReview,reason:String(raw.reason||'Подготовлено заранее').slice(0,120),selected:true,
+      classificationSource:'prepared'
+    };
+  }
+  async function loadPreparedFile(file){
+    if(!file)return;
+    if(file.size>MAX_FILE_BYTES){window.FinanceControl?.showToast?.('Файл больше 10 МБ');return}
+    try{
+      const text=await readTextFile(file);
+      const data=JSON.parse(text);
+      if(!data||typeof data!=='object')throw new Error('Некорректный JSON');
+      if(data.format!==PREPARED_FORMAT)throw new Error('Это не Finance Control Prepared Import файл');
+      if(Number(data.version)!==PREPARED_VERSION)throw new Error(`Неподдерживаемая версия файла: ${data.version}`);
+      if(!Array.isArray(data.transactions)||!data.transactions.length)throw new Error('В файле нет транзакций');
+      if(data.transactions.length>20000)throw new Error('Слишком много транзакций в одном файле');
+      const occurrence=new Map();const out=[];const errors=[];
+      data.transactions.forEach((raw,i)=>{
+        const normalized=normalizePreparedTransaction(raw,i,occurrence);
+        if(normalized.error){if(errors.length<8)errors.push(normalized.error);return}
+        out.push(normalized);
+      });
+      if(!out.length)throw new Error(errors[0]||'Не удалось прочитать транзакции');
+      importSource='prepared';prepared=[];reviewed=out;reviewVisible=REVIEW_PAGE_SIZE;
+      for(const r of reviewed){if(window.FinanceControl?.hasExternalId?.(r.externalId)){r.duplicate=true;r.selected=false}}
+      $('preparedFileLabel').textContent=file.name;
+      const dates=reviewed.map(x=>x.date).sort();
+      const income=reviewed.filter(x=>x.signedAmount>0).reduce((s,x)=>s+x.amount,0);
+      const expense=reviewed.filter(x=>x.signedAmount<0).reduce((s,x)=>s+x.amount,0);
+      $('preparedFileSummary').innerHTML=`<div class="file-stat"><span>Операций</span><strong>${reviewed.length}</strong></div><div class="file-stat"><span>Поступления</span><strong>${money(income)}</strong></div><div class="file-stat"><span>Списания</span><strong>${money(expense)}</strong></div><div class="file-stat"><span>Период</span><strong>${esc(formatShortDate(dates[0]))} — ${esc(formatShortDate(dates[dates.length-1]))}</strong></div>`+(errors.length?`<div class="import-warning" style="grid-column:1/-1">Пропущено ${data.transactions.length-reviewed.length} строк. ${esc(errors.join(' · '))}</div>`:'');
+      $('preparedFileSummary').classList.remove('hidden');
+      $('preparedSection').classList.add('hidden');
+      renderReview();$('reviewSection').classList.remove('hidden');
+      window.FinanceControl?.showToast?.(`Готовый файл: ${reviewed.length} операций`);
+      setTimeout(()=>$('reviewSection').scrollIntoView({behavior:'smooth',block:'start'}),120);
+    }catch(error){
+      $('preparedFile').value='';$('preparedFileLabel').textContent='Выбрать готовый JSON';$('preparedFileSummary').classList.add('hidden');
+      window.FinanceControl?.showToast?.(error.message||'Не удалось прочитать готовый JSON');
+    }
+  }
+  function downloadPreparedTemplate(){
+    const template={
+      format:PREPARED_FORMAT,version:PREPARED_VERSION,currency:'EUR',created_at:new Date().toISOString().slice(0,10),
+      note:'amount is signed: positive = incoming, negative = outgoing',
+      transactions:[
+        {date:'2026-08-01',amount:-63.74,kind:'expense',category:'Топливо',merchant:'Shell',description:'SHELL STATION',confidence:0.99,needs_review:false},
+        {date:'2026-08-02',amount:814.32,kind:'income',category:'Зарплата',merchant:'Employer',description:'SALARY PAYMENT',confidence:0.99,needs_review:false}
+      ]
+    };
+    const blob=new Blob([JSON.stringify(template,null,2)],{type:'application/json'});const a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);a.download='finance-control-prepared-template.json';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),500);
+  }
+
   async function loadBankFile(file){
     if(!file)return;
     if(file.size>MAX_FILE_BYTES){window.FinanceControl?.showToast?.('Файл больше 10 МБ');return}
@@ -217,7 +304,7 @@
       const width=Math.max(...table.slice(0,20).map(r=>r.length));
       const headers=Array.from({length:width},(_,i)=>String(table[0][i]||`Колонка ${i+1}`).trim()||`Колонка ${i+1}`);
       const rows=table.slice(1).map(r=>Array.from({length:width},(_,i)=>r[i]??''));
-      csv={headers,rows,fileName:file.name,delimiter};prepared=[];reviewed=[];
+      importSource='bank';csv={headers,rows,fileName:file.name,delimiter};prepared=[];reviewed=[];
       $('bankFileLabel').textContent=file.name;
       const d=delimiter==='\t'?'TAB':delimiter;
       $('fileSummary').innerHTML=`<div class="file-stat"><span>Строк</span><strong>${rows.length}</strong></div><div class="file-stat"><span>Колонок</span><strong>${headers.length}</strong></div><div class="file-stat"><span>Разделитель</span><strong>${esc(d)}</strong></div><div class="file-stat"><span>Размер</span><strong>${file.size>=1024*1024?`${(file.size/1024/1024).toFixed(1)} MB`:`${(file.size/1024).toFixed(1)} KB`}</strong></div>`;
@@ -287,7 +374,7 @@
     if(kind==='debt_payment')category='Погашение долга';
     if(kind==='income'&&category==='Другое')category='Прочий доход';
     const confidence=Math.max(0,Math.min(1,Number(c?.confidence)||0));
-    return{...row,kind,category,merchant:String(c?.merchant||row.redactedDescription).slice(0,100),confidence,needsReview:Boolean(c?.needs_review)||confidence<0.78,reason:String(c?.reason||'').slice(0,120),selected:true};
+    return{...row,kind,category,merchant:String(c?.merchant||row.redactedDescription).slice(0,100),confidence,needsReview:Boolean(c?.needs_review)||confidence<0.78,reason:String(c?.reason||'').slice(0,120),selected:true,classificationSource:'ai'};
   }
 
   async function analyzeWithAI(){
@@ -345,7 +432,7 @@
       <div class="review-main"><strong>${esc(r.merchant||r.description)}</strong><span>${esc(formatShortDate(r.date))} · ${esc(r.description)}</span>${r.duplicate?'<span class="duplicate-tag">Уже импортировано</span>':''}</div>
       <div class="review-kind"><select data-review-kind="${esc(r.id)}" aria-label="Тип операции">${optionList(KINDS,r.kind)}</select></div>
       <div class="review-category"><select data-review-category="${esc(r.id)}" aria-label="Категория">${categoryOptions(r.category)}</select></div>
-      <div class="review-side"><div class="review-amount ${r.signedAmount>0?'income':'expense'}">${r.signedAmount>0?'+':'−'}${money(r.amount)}</div><div class="confidence ${r.confidence<.78?'low':''}"><span class="confidence-dot"></span>${Math.round(r.confidence*100)}% AI</div></div>
+      <div class="review-side"><div class="review-amount ${r.signedAmount>0?'income':'expense'}">${r.signedAmount>0?'+':'−'}${money(r.amount)}</div><div class="confidence ${r.classificationSource==='prepared'?'prepared':(r.confidence<.78?'low':'')}"><span class="confidence-dot"></span>${r.classificationSource==='prepared'?(r.needsReview?'Проверь':'Подготовлено'):`${Math.round(r.confidence*100)}% AI`}</div></div>
     </article>`).join('')+(rows.length>visible.length?`<button class="secondary-btn full-btn" type="button" id="reviewLoadMore">Показать ещё ${Math.min(REVIEW_PAGE_SIZE,rows.length-visible.length)}</button>`:'')+(!rows.length?'<div class="empty-state"><strong>Ничего не найдено</strong>Измени фильтр или поиск.</div>':'');
     updateImportSummary();
     $('reviewLoadMore')?.addEventListener('click',()=>{reviewVisible+=REVIEW_PAGE_SIZE;renderReview()});
@@ -372,7 +459,7 @@
     const transactions=rows.map(r=>({
       type:(r.kind==='income'||r.kind==='refund'||(r.kind==='transfer'&&r.signedAmount>0))?'income':'expense',
       kind:r.kind,amount:r.amount,category:r.category,date:r.date,
-      merchant:r.merchant,note:r.description,externalId:r.externalId,importedByAI:true
+      merchant:r.merchant,note:r.description,externalId:r.externalId,importedByAI:r.classificationSource==='ai'
     }));
     const result=window.FinanceControl?.bulkImportTransactions?.(transactions,{preserveAvailableBalance:true});
     if(result){
@@ -384,7 +471,7 @@
   function resetImport(clearFile=true){
     prepared=[];reviewed=[];reviewVisible=REVIEW_PAGE_SIZE;reviewFilter='all';
     $('preparedSection')?.classList.add('hidden');$('reviewSection')?.classList.add('hidden');$('analysisProgress')?.classList.add('hidden');
-    if(clearFile){csv={headers:[],rows:[],fileName:'',delimiter:';'};$('bankFile').value='';$('bankFileLabel').textContent='Выбрать CSV';$('fileSummary').classList.add('hidden');$('mappingPanel').classList.add('hidden')}
+    if(clearFile){importSource='bank';csv={headers:[],rows:[],fileName:'',delimiter:';'};$('bankFile').value='';$('bankFileLabel').textContent='Выбрать CSV';$('fileSummary').classList.add('hidden');$('mappingPanel').classList.add('hidden');if($('preparedFile'))$('preparedFile').value='';if($('preparedFileLabel'))$('preparedFileLabel').textContent='Выбрать готовый JSON';$('preparedFileSummary')?.classList.add('hidden')}
   }
   function openAiSettings(){
     window.FinanceControl?.showPage?.('settings');
@@ -393,11 +480,19 @@
 
   // File input + drag/drop
   $('bankFile')?.addEventListener('change',()=>loadBankFile($('bankFile').files?.[0]));
+  $('preparedFile')?.addEventListener('change',()=>loadPreparedFile($('preparedFile').files?.[0]));
+  $('downloadPreparedTemplateBtn')?.addEventListener('click',downloadPreparedTemplate);
   const drop=$('bankDropZone');
   if(drop){
     ['dragenter','dragover'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.add('drag')}));
     ['dragleave','drop'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.remove('drag')}));
     drop.addEventListener('drop',e=>loadBankFile(e.dataTransfer?.files?.[0]));
+  }
+  const preparedDrop=$('preparedDropZone');
+  if(preparedDrop){
+    ['dragenter','dragover'].forEach(ev=>preparedDrop.addEventListener(ev,e=>{e.preventDefault();preparedDrop.classList.add('drag')}));
+    ['dragleave','drop'].forEach(ev=>preparedDrop.addEventListener(ev,e=>{e.preventDefault();preparedDrop.classList.remove('drag')}));
+    preparedDrop.addEventListener('drop',e=>loadPreparedFile(e.dataTransfer?.files?.[0]));
   }
   $('prepareImportBtn')?.addEventListener('click',prepareOperations);
   $('analyzeAiBtn')?.addEventListener('click',analyzeWithAI);

@@ -150,7 +150,7 @@
           </div>
           <div class="heading-actions">
             <button class="secondary-btn ai-entry-btn" type="button" data-go="import">
-              <span class="ai-spark">✦</span><span>AI импорт</span>
+              <span class="ai-spark">✦</span><span>Импорт</span>
             </button>
             <button class="primary-btn" type="button" id="addTxBtn">+ Добавить</button>
           </div>
@@ -177,14 +177,14 @@
           <div>
             <span class="micro-label">AI Import</span>
             <h2>Импорт выписки</h2>
-            <p>Загрузи CSV из банка. Приложение очистит данные, AI распределит операции, а ты всё проверишь до добавления.</p>
+            <p>Два пути: загрузи CSV из банка для AI-разбора или готовый Finance Control JSON, который уже содержит категории и импортируется без API.</p>
           </div>
           <button class="secondary-btn" type="button" data-go="transactions">← Операции</button>
         </div>
 
         <div class="ai-privacy-note">
           <span class="privacy-shield">✓</span>
-          <div><strong>Приватность по умолчанию</strong><p>IBAN, длинные номера карт и похожие идентификаторы удаляются до отправки. В OpenAI уходят только дата, сумма и очищенное описание выбранных операций.</p></div>
+          <div><strong>Приватность по умолчанию</strong><p>CSV перед AI очищается от IBAN, длинных номеров карт и похожих идентификаторов. Готовый JSON разбирается полностью на устройстве и вообще не отправляется в OpenAI.</p></div>
         </div>
 
         <section class="import-grid">
@@ -225,6 +225,26 @@
               <div><span>Browser</span><strong>Finance Control</strong></div><i>→</i><div><span>Supabase</span><strong>Edge Function</strong></div><i>→</i><div><span>OpenAI</span><strong>GPT classifier</strong></div>
             </div>
             <button class="secondary-btn full-btn" type="button" id="openAiSettingsBtn">Настроить подключение</button>
+          </article>
+
+          <article class="import-card prepared-file-card">
+            <div class="prepared-file-copy">
+              <div class="import-card-head">
+                <div><span class="step-number">БЕЗ API</span><span class="micro-label">Готовые данные</span><h3>Finance Control JSON</h3></div>
+                <span class="connection-pill ok"><span></span>Локально</span>
+              </div>
+              <p class="import-copy">Если выписку уже разобрал ChatGPT, загрузи подготовленный JSON. Категории, типы и продавцы уже будут внутри — останется только проверить и подтвердить импорт.</p>
+              <button class="secondary-btn template-btn" type="button" id="downloadPreparedTemplateBtn">Скачать шаблон JSON</button>
+            </div>
+            <div class="prepared-file-upload">
+              <label class="drop-zone compact-drop" id="preparedDropZone" for="preparedFile">
+                <input id="preparedFile" type="file" accept="application/json,.json" />
+                <span class="drop-icon">✓</span>
+                <strong id="preparedFileLabel">Выбрать готовый JSON</strong>
+                <span>Формат Finance Control Prepared Import v1 · файл читается только на устройстве</span>
+              </label>
+              <div id="preparedFileSummary" class="file-summary prepared-file-summary hidden"></div>
+            </div>
           </article>
         </section>
 
